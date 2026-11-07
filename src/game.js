@@ -178,8 +178,8 @@ function initialTime() {
   if (/night/.test(h)) return 'night';
   if (/sunset|dusk/.test(h)) return 'dusk';
   if (/day|morning/.test(h)) return 'day';
-  if (W.skyMode && TIMES[W.skyMode]) return W.skyMode;
-  try { const s = localStorage.getItem('wedding-time'); if (TIMES[s]) return s; } catch {}
+  try { const s = localStorage.getItem('wedding-time'); if (TIMES[s]) return s; } catch {}   // 하객이 메뉴에서 고른 것
+  if (W.skyMode && TIMES[W.skyMode]) return W.skyMode;                                           // 설정 기본값 (day)
   const kh = new Date(now().toLocaleString('en-US', { timeZone: 'Asia/Seoul' })).getHours();
   return kh >= 6 && kh < 16 ? 'day' : kh < 19 ? 'dusk' : 'night';
 }

@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-rem 코드 묶기 → 배포 폴더 만들기 → Vercel(weddingvillage) 프로덕션 배포. (Node.js 필요, 처음엔 vercel login)
+rem 코드 묶기 → 배포 폴더 만들기 → Vercel 프로덕션 배포. (Node.js 필요, 처음엔 vercel login. 자기 주소로 올리려면 SITE_URL 환경변수에 그 주소를 넣으세요)
 cd /d "%~dp0"
 echo [1/3] 코드를 js/app.js 로 묶는 중...
 call npx --yes esbuild@0.24.0 src/main.js --bundle --format=iife --minify --target=es2019 --alias:three=./src/vendor/three.module.min.js --outfile=js/app.js --log-level=warning

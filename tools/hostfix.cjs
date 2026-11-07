@@ -1,1 +1,1 @@
-const os = require('os'); os.hostname = () => 'claude-pc'; const ui = os.userInfo; os.userInfo = (o) => { const u = ui.call(os, o); return { ...u, username: 'kjh8i' }; }; process.env.COMPUTERNAME = 'CLAUDE-PC'; process.env.HOSTNAME = 'claude-pc';
+const os = require('os'); os.hostname = () => 'claude-pc'; const ui = os.userInfo; os.userInfo = (o) => { const u = ui.call(os, o); return { ...u, username: 'user' }; }; process.env.COMPUTERNAME = 'CLAUDE-PC'; process.env.HOSTNAME = 'claude-pc';

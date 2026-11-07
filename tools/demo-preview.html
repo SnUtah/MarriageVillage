@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>데모 사진 미리보기</title>
+<style>body{margin:0;background:#FFF9F0;font-family:sans-serif;padding:12px}h2{margin:14px 0 6px;font-size:16px}.g{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.g img{width:100%;display:block;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.15)}small{color:#777}</style>
+<script src="../config.js"></script>
+</head><body>
+<p><b>🎨 데모 사진 미리보기</b> <small>(개발용: 사진 폴더가 비어 있을 때 그려지는 일러스트)</small></p>
+<div id="out"></div>
+<script type="module">
+import { demoPhoto } from '../src/demo-photos.js';
+const out = document.getElementById('out');
+for (const t of window.WEDDING.museum.themes) {
+  const h = document.createElement('h2'); h.textContent = `${t.emoji} ${t.title}`; out.appendChild(h);
+  const g = document.createElement('div'); g.className = 'g'; out.appendChild(g);
+  for (let i = 0; i < t.count; i++) {
+    const c = demoPhoto(t, i, 420);
+    const img = new Image(); img.src = c.toDataURL('image/jpeg', .85); img.title = t.captions?.[i] || '';
+    g.appendChild(img);
+  }
+}
+document.title = 'done';
+</script></body></html>

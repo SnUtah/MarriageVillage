@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+<meta name="theme-color" content="#CDEBFA" />
+<meta name="format-detection" content="telephone=no" />
+<title>김신랑 ♥ 김신부 결혼합니다</title>
+<meta name="description" content="김신랑 ♥ 김신부의 작은 결혼 마을에 놀러 오세요" />
+<!-- 카카오톡·문자로 링크를 보낼 때 보이는 미리보기 -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="김신랑 ♥ 김신부 결혼합니다 💍" />
+<meta property="og:description" content="캐릭터로 작은 결혼 마을을 걸으며 청첩장과 추억 사진을 구경해 주세요" />
+<!-- 카톡·인스타 링크 미리보기 사진 (인터넷에 올린 주소로 바꿔주세요) -->
+<meta property="og:url" content="https://marriagevillage.vercel.app/" />
+<meta property="og:image" content="https://marriagevillage.vercel.app/og.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💍</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="phone">
+  <div id="app"></div>
+
+  <!-- 📖 글로 보기: 3D 없이 한 페이지로 읽는 청첩장 (내용은 textview.js가 채움) -->
+  <div id="textview" role="document" aria-label="글로 보기"></div>
+
+  <!-- 시작 화면 (뒤로 마을이 천천히 돌아가며 보여요) -->
+  <section id="intro">
+    <div class="intro-card">
+      <div class="intro-eyebrow">WEDDING VILLAGE</div>
+      <div class="intro-names"><span id="i-groom"></span><span class="heart">♥</span><span id="i-bride"></span></div>
+      <div class="intro-date" id="i-date"></div>
+      <div><span class="intro-dday" id="i-dday"></span><span class="demo-badge" id="demo-badge" hidden>데모 시계</span></div>
+      <div class="today" id="today" hidden>
+        <div class="t-now"></div>
+        <div class="btns"><button class="btn small t-dir" type="button">🗺️ 오시는 길</button><button class="btn small t-acc" type="button">🎁 마음 전하실 곳</button></div>
+      </div>
+      <div class="loadbar"><i id="loadbar"></i></div>
+      <div class="intro-label">🎲 오늘의 내 캐릭터</div>
+      <div class="char-line">
+        <div class="avatar" id="avatar" aria-hidden="true"><i class="hd"></i><i class="bd"></i><i class="lg"></i></div>
+        <div class="char-text"><b>무작위로 정해졌어요</b>이 모습으로 마을을 걸어요</div>
+        <button class="btn-reroll" id="btn-reroll" type="button" aria-label="캐릭터 다시 뽑기">다시 뽑기</button>
+      </div>
+      <button class="btn-primary" id="btn-enter" disabled>마을 준비 중…</button>
+      <div class="btn-row">
+        <button class="btn-ghost" id="btn-tour-start">🚶 자동 투어로 둘러보기</button>
+        <button class="btn-ghost" id="btn-text">📖 글로 보기</button>
+      </div>
+      <div class="intro-help" id="intro-help">화면을 끌면 캐릭터가 걷고,<br />이름표를 톡 누르면 그곳으로 찾아가요 ✨</div>
+    </div>
+  </section>
+
+  <!-- 상단 -->
+  <div class="hud-top">
+    <div class="pill names-pill"><b id="h-names"></b><span class="dd" id="h-dday"></span></div>
+    <button class="pill exit-pill" id="btn-exit">🚪 밖으로 나가기</button>
+    <button class="pill tour-pill" id="btn-tour">🚶 투어 중 · 멈추기</button>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="btn-sound" aria-label="소리 켜기/끄기" hidden>🔇</button>
+    <button class="icon-btn" id="btn-shot" aria-label="기념사진">📷</button>
+    <button class="icon-btn" id="btn-menu" aria-label="바로가기">☰</button>
+  </div>
+  <nav id="museum-bar" aria-label="사진관 테마"></nav>
+
+  <!-- 조작 -->
+  <div id="joy"><div class="knob"></div><span class="hint">화면을 끌어서 걸어요</span></div>
+  <div class="actions">
+    <div class="row">
+      <button class="round" id="btn-heart" aria-label="하트">💗</button>
+      <button class="round" id="btn-jump" aria-label="점프">⤴</button>
+    </div>
+    <button id="btn-action"><span class="em">👋</span><span class="lb">인사하기</span></button>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="count" aria-hidden="true"></div>
+  <div id="fade"></div>
+
+  <!-- 팝업 -->
+  <div id="modal">
+    <div class="backdrop"></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="sheet-top">
+        <div class="grab"></div>
+        <div class="sheet-head">
+          <h2 id="modal-title"></h2>
+          <button class="fs fs-toggle" id="modal-fs" type="button" aria-label="글자 크게">가+</button>
+          <button class="close" id="modal-close" aria-label="닫기">✕</button>
+        </div>
+      </div>
+      <div class="sheet-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- 사진 크게 보기 -->
+  <div id="lightbox" role="dialog" aria-label="사진 크게 보기">
+    <button class="lb-close" aria-label="닫기">✕</button>
+    <button class="lb-nav prev" aria-label="이전">‹</button>
+    <img alt="" />
+    <div class="cap"></div>
+    <button class="lb-nav next" aria-label="다음">›</button>
+    <div class="lb-help">두 번 탭해서 확대 · 옆으로 넘기기 · 아래로 내려 닫기</div>
+  </div>
+
+  <audio id="bgm" loop preload="none"></audio>
+</div>
+
+<!-- 휴대폰을 가로로 들었을 때 -->
+<div id="rotate"><div class="ph">📱</div><b>휴대폰을 세로로 돌려주세요</b><span class="muted">세로 화면에 맞춰 만들었어요</span></div>
+
+<!-- PC에서만 보이는 소개 패널 -->
+<aside id="desk">
+  <h3>💍 작은 결혼 마을</h3>
+  <p>하객이 캐릭터로 마을을 걸으며 청첩장·사진관·편지함을 구경하는 결혼식 홈페이지예요. 휴대폰 세로 화면 기준이라 PC에서는 휴대폰 틀 안에 보여요.</p>
+  <div class="desk-btns">
+    <button class="btn" id="btn-wide" type="button">🖥 넓게 보기</button>
+    <button class="btn" id="btn-desk-text" type="button">📖 글로 보기</button>
+  </div>
+  <hr />
+  <b>조작</b><br />
+  클릭 = 걸어가기 · 드래그 = 조이스틱<br />
+  <kbd>W A S D</kbd> 이동 · <kbd>E</kbd> 구경 · <kbd>Space</kbd> 점프<br />
+  <kbd>H</kbd> 하트 · <kbd>N</kbd> 낮/밤 · <kbd>Esc</kbd> 닫기
+  <hr />
+  <b>둘러볼 곳</b> <span id="visit-count" class="muted"></span>
+  <ul class="visits" id="visits">
+    <li data-id="invitation">💌 청첩장</li>
+    <li data-id="mailbox">✉️ 편지함</li>
+    <li data-id="directions">🗺️ 오시는 길</li>
+    <li data-id="gift">🎁 마음 전하기</li>
+    <li data-id="schedule">🕰️ 식순</li>
+    <li data-id="quiz">❓ 퀴즈</li>
+    <li data-id="fountain">🪙 소원 분수</li>
+    <li data-id="couple">💐 신랑신부</li>
+    <li data-id="photozone">📸 포토존</li>
+    <li data-id="museum">🖼️ 사진관</li>
+  </ul>
+  <hr />
+  <small>Three.js r160 · 서버 없음 · 파일 하나로 동작 · 사진은 캔버스 일러스트 · 주소 끝에 <b>#demo</b>(예식 당일) · <b>#night</b>(밤)</small>
+</aside>
+
+<script src="config.js"></script>
+<!-- 모든 코드를 한 파일로 묶은 것 (원본은 src 폴더). 파일을 더블클릭해서 열어도 동작해요 -->
+<script src="js/app.js"></script>
+</body>
+</html>

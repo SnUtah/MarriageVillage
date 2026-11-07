@@ -4,7 +4,7 @@
 서버 없이 **HTML 파일 하나**로 동작하고, 이름·날짜·사진·편지는 전부 `config.js` 한 파일에서 바꿉니다.
 (이 폴더의 이름·장소·편지·사진은 모두 **가상의 예시**입니다.)
 
-> 🌐 **살펴보기:** https://marriagevillage.vercel.app  ·  📦 `한파일로_만들기.bat`으로 만든 `결혼마을.html` 하나로도 열립니다(인터넷 없이도 동작).
+> 🌐 **살펴보기:** https://marriagevillage.vercel.app  ·  💻 **코드:** https://github.com/SnUtah/MarriageVillage  ·  📦 `한파일로_만들기.bat`으로 만든 `결혼마을.html` 하나로도 열립니다(인터넷 없이도 동작).
 
 ## 마을에 있는 것들
 

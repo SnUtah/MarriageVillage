@@ -485,7 +485,7 @@ export function buildEnvironment(scene, avoid) {
 
   // 안쪽 나무들
   const innerTrees = [
-    [-9, 27, 'blossom'], [9, 29, 'blossom'], [-24, 22, 'green'], [24, 20, 'blossom'], [-30, 6, 'green'],
+    [-9, 27, 'blossom'], [14.5, 31, 'blossom'], [-24, 22, 'green'],   // (9,29)에 있던 벚나무는 편지 꽃밭을 가려서 오른쪽 뒤로 [24, 20, 'blossom'], [-30, 6, 'green'],
     [30, 4, 'green'], [-28, -20, 'blossom'], [33, -20, 'green'], [-8, -28, 'green'], [8, -29, 'blossom'],
     [-15, 12, 'blossom'], [16, 14, 'green'], [-22, -2, 'green'], [11, -22, 'green'], [-12, -24, 'blossom'],
   ];
@@ -495,7 +495,7 @@ export function buildEnvironment(scene, avoid) {
   });
 
   // 덤불
-  [[-5, 28], [5, 27], [-14, 8], [13, 3], [-3, -21], [3, -21], [-26, 12], [26, 10], [-20, -18], [28, -8]].forEach(([x, z], i) => {
+  [[-5, 28], [12.5, 27.5], [-14, 8], [13, 3], [-3, -21], [3, -21], [-26, 12], [26, 10], [-20, -18], [28, -8]].forEach(([x, z], i) => {
     group.add(bush(x, z, rand(0.9, 1.3), i % 3 === 0 ? '#A7D08F' : '#8CC47A'));
     colliders.push({ x, z, r: 0.9 });
   });

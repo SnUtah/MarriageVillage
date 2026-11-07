@@ -135,6 +135,16 @@ a { touch-action: manipulation; }
 .pill b { font-family: 'Gowun Batang', serif; overflow: hidden; text-overflow: ellipsis; }
 .pill .dd { color: var(--rose); font-weight: 700; font-size: 12px; }
 .hud-top .spacer { flex: 1; }
+/* 📖 글로 보기 (☰ 옆) */
+.text-pill { min-height: 44px; font-weight: 700; font-size: 14px; }
+.text-pill:active { transform: scale(.95); }
+/* ☰ 아래 세로 버튼 (소리 · 기념사진) */
+.hud-side {
+  position: fixed; z-index: 10; right: calc(12px + var(--safe-r)); top: calc(62px + var(--safe-t));
+  display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+}
+body.in-museum .hud-side { top: calc(116px + var(--safe-t)); }
+body:not(.playing) .hud-side, body.reading .hud-side { display: none; }
 /* 사진관 안에서는 이름표 대신 '밖으로 나가기' 버튼 */
 .exit-pill { display: none; min-height: 44px; font-size: 15px; font-weight: 700; color: #fff; background: var(--rose); }
 .exit-pill:active { transform: scale(.95); }
@@ -413,6 +423,7 @@ body:not(.playing) .hud-top, body:not(.playing) #joy, body:not(.playing) .action
 @media (max-width: 360px) {
   #btn-action { height: 76px; min-width: 76px; font-size: 13px; }
   .pill { font-size: 13px; padding: 8px 11px; }
+  .text-pill { padding: 8px 10px; }
   .intro-names { font-size: 25px; }
   .menu-item { font-size: 12px; }
   .env-grid { grid-template-columns: 1fr; }

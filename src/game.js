@@ -274,9 +274,21 @@ function bindInput() {
   el.addEventListener('pointerup', end);
   el.addEventListener('pointercancel', end);
 
-  $('#btn-action').addEventListener('click', () => interact());
-  $('#btn-jump').addEventListener('click', () => jump());
-  $('#btn-heart').addEventListener('click', () => hearts());
+  // 조이스틱을 끄는 손가락이 눌린 채로 다른 손가락이 버튼을 누르면 휴대폰은 click을 만들어 주지 않음
+  // → pointerdown으로 바로 반응 (키보드 Enter/Space는 click으로)
+  tapButton($('#btn-action'), () => interact());
+  tapButton($('#btn-jump'), () => jump());
+  tapButton($('#btn-heart'), () => hearts());
+}
+function tapButton(el, fn) {
+  let lastPointer = 0;
+  el.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    lastPointer = performance.now();
+    e.preventDefault();
+    fn();
+  });
+  el.addEventListener('click', () => { if (performance.now() - lastPointer > 500) fn(); });
 }
 
 /* 이름표를 누르거나 투어에서 쓰는 '찾아가기': 물건 바로 앞까지 */

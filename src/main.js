@@ -183,7 +183,6 @@ async function boot() {
   const themes = game ? game.themes : photoThemes();
   const MENU = [
     { emoji: '💌', label: '청첩장', go: UI.showInvitation },
-    { emoji: '📖', label: '글로 보기', go: () => { UI.closeModal(); openText(); } },
     { emoji: '🗺️', label: '오시는 길', go: UI.showDirections },
     { emoji: '✉️', label: '축하 편지', go: () => UI.showMailbox(game?.letterSent) },
     game
@@ -206,6 +205,7 @@ async function boot() {
   }
   const openMenu = () => UI.showMenu(MENU);
   $('#btn-menu').onclick = openMenu;
+  $('#btn-text-hud').onclick = () => openText();
   $('#btn-desk-text')?.addEventListener('click', () => openText());
 
   /* ---------- 소리: mp3가 있으면 그것을, 없으면 합성 오르골 ---------- */

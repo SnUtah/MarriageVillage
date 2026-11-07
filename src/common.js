@@ -89,29 +89,126 @@ export function buzz(ms = 10) {
 }
 
 /* ---------- ✉️ 편지 보관 ----------
-   하객이 쓴 편지는 그 휴대폰(브라우저)에 저장되고,
-   config.js의 letters(샘플 편지)와 합쳐서 보여줍니다. */
-const LS_KEY = 'wedding-letters-v2';
-function savedLetters() {
-  try { const v = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
-}
+   기본: 하객이 쓴 편지는 그 휴대폰(브라우저)에 저장되고 config.js의 letters(샘플)와 합쳐서 보여줍니다.
+   config.js에 lettersSheet(구글 시트에 붙인 Apps Script 웹 앱 주소)를 넣으면
+   편지가 시트로 보내지고, 시트에 모인 편지를 모든 하객이 봅니다. (tools/편지_시트_연결.md)
+   - 보내기에 실패하면 휴대폰에 보관(pending)해 두었다가 다음에 자동으로 다시 보냅니다
+   - 시트에서 받아 온 목록은 휴대폰에도 복사해 두어, 연결이 느려도 바로 보입니다 */
+const LS_KEY = 'wedding-letters-v2';        // 내가 쓴 편지
+const LS_REMOTE = 'wedding-letters-remote'; // 시트에서 받아 온 편지 (마지막 사본)
+const W_ = () => window.WEDDING || {};
+export const lettersRemote = () => !!W_().lettersSheet;
+const siteId = () => String(W_().lettersSite || 'main');
+const lsGet = k => { try { const v = JSON.parse(localStorage.getItem(k) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID()
+  : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
+
+function savedLetters() { return lsGet(LS_KEY); }
+let seedCache = null; // 예시 편지는 한 번만 만들어 시간·id를 고정 (꽃밭이 같은 편지를 두 번 심지 않도록)
 function seedLetters() {
+  if (seedCache) return seedCache;
   const now = Date.now();
-  return (window.WEDDING.letters || []).map((l, i) => ({
-    name: l.name, side: l.side || '', message: l.message,
+  seedCache = (W_().letters || []).map((l, i) => ({
+    id: `seed-${i}`, name: l.name, side: l.side || '', message: l.message,
     time: l.time || new Date(now - (l.daysAgo ?? i) * 86400000 - (i * 37 % 23) * 60000).toISOString(),
     seed: true,
   }));
+  return seedCache;
 }
+
+const remote = { list: lettersRemote() ? lsGet(LS_REMOTE) : [], at: 0, loading: null, error: null, ok: false };
+export const lettersStatus = () => ({ remote: lettersRemote(), loading: !!remote.loading, error: remote.error, loaded: remote.ok, at: remote.at });
+const notify = () => { try { dispatchEvent(new CustomEvent('wedding:letters')); } catch {} };
+
+/* 시트(Apps Script 웹 앱) 호출. GET은 목록, POST는 편지 한 통.
+   본문을 text/plain으로 보내야 브라우저가 사전 요청(preflight) 없이 바로 보냅니다. */
+async function call(method, params, body) {
+  const u = new URL(W_().lettersSheet);
+  u.searchParams.set('site', siteId());
+  Object.entries(params || {}).forEach(([k, v]) => u.searchParams.set(k, v));
+  const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = setTimeout(() => ctrl?.abort(), 15000);
+  try {
+    const r = await fetch(u.toString(), {
+      method, redirect: 'follow', signal: ctrl?.signal,
+      ...(body ? { body: JSON.stringify(body), headers: { 'Content-Type': 'text/plain;charset=utf-8' } } : {}),
+    });
+    const j = await r.json();
+    if (!j || j.ok !== true) throw new Error(j?.error || 'bad response');
+    return j;
+  } finally { clearTimeout(timer); }
+}
+
+/* 보내지 못한 편지 다시 보내기 */
+async function sendPending() {
+  const mine = savedLetters();
+  if (!mine.some(l => l.pending)) return;
+  for (const l of mine) {
+    if (!l.pending) continue;
+    try { await call('POST', {}, { id: l.id, name: l.name, side: l.side, message: l.message, time: l.time }); delete l.pending; }
+    catch { break; }
+  }
+  lsSet(LS_KEY, mine);
+}
+
+/* 시트에서 편지 목록 받아 오기. 짧은 시간 안에 여러 번 불러도 한 번만 요청합니다. */
+export function fetchLetters({ force = false } = {}) {
+  if (!lettersRemote()) return Promise.resolve(allLetters());
+  if (remote.loading) return remote.loading;
+  if (!force && remote.ok && Date.now() - remote.at < 10000) return Promise.resolve(allLetters());
+  remote.loading = (async () => {
+    try {
+      await sendPending();
+      const j = await call('GET', { action: 'list', t: Date.now() });
+      remote.list = (j.letters || []).filter(l => l && l.message).map(l => ({
+        id: String(l.id || ''), name: String(l.name || ''), side: String(l.side || ''), message: String(l.message || ''), time: l.time || '',
+      }));
+      remote.at = Date.now(); remote.ok = true; remote.error = null;
+      lsSet(LS_REMOTE, remote.list.slice(0, 300));
+      // 시트에 들어간 내 편지는 '보내는 중' 표시를 지움
+      const ids = new Set(remote.list.map(l => l.id));
+      const mine = savedLetters(); let changed = false;
+      mine.forEach(l => { if (l.pending && ids.has(l.id)) { delete l.pending; changed = true; } });
+      if (changed) lsSet(LS_KEY, mine);
+    } catch (e) {
+      remote.error = e?.message || String(e);
+    } finally {
+      remote.loading = null;
+      notify();
+    }
+    return allLetters();
+  })();
+  return remote.loading;
+}
+
 export function allLetters() {
   const mine = savedLetters().map(l => ({ ...l, mine: true }));
-  return [...mine, ...seedLetters()];
+  if (!lettersRemote()) return [...mine, ...seedLetters()];
+  const mineIds = new Set(mine.map(l => l.id).filter(Boolean));
+  const sheetIds = new Set(remote.list.map(l => l.id));
+  const fromSheet = remote.list.map(l => (mineIds.has(l.id) ? { ...l, mine: true } : l));
+  const notYet = mine.filter(l => !sheetIds.has(l.id)); // 아직 시트에 안 들어갔거나 보내는 중인 내 편지
+  return [...notYet, ...fromSheet, ...seedLetters()];
 }
-export function saveLetter(letter) {
+
+/* 편지 저장. 시트가 연결돼 있으면 보내고, 실패하면 휴대폰에 보관(pending)했다가 나중에 다시 보냅니다.
+   돌려주는 값: { ok, letter, sent } */
+export async function saveLetter(letter) {
+  const l = { id: uuid(), name: letter.name, side: letter.side || '', message: letter.message, time: letter.time || new Date().toISOString() };
   const list = savedLetters();
-  list.unshift(letter);
-  try { localStorage.setItem(LS_KEY, JSON.stringify(list.slice(0, 100))); } catch {}
-  return list;
+  list.unshift(lettersRemote() ? { ...l, pending: true } : l);
+  lsSet(LS_KEY, list.slice(0, 100));
+  if (!lettersRemote()) return { ok: true, letter: l, sent: false };
+  // (보낸 쪽 화면이 직접 다시 그리고 꽃도 심으므로 여기서는 알림 이벤트를 보내지 않아요)
+  try {
+    await call('POST', {}, l);
+    const cur = savedLetters(); const m = cur.find(x => x.id === l.id); if (m) { delete m.pending; lsSet(LS_KEY, cur); }
+    remote.list.unshift(l); lsSet(LS_REMOTE, remote.list.slice(0, 300));
+    return { ok: true, letter: l, sent: true };
+  } catch (e) {
+    return { ok: false, letter: l, sent: false, error: e?.message || String(e) };
+  }
 }
 export function letterCount() { return allLetters().length; }
 

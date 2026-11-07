@@ -1,7 +1,7 @@
 import * as UI from './ui.js';
 import * as Game from './game.js';
 import { openTextView } from './textview.js';
-import { formatKDate, dday, photoThemes, buzz, phase, currentStep, isDemoClock } from './common.js';
+import { formatKDate, dday, photoThemes, buzz, phase, currentStep, isDemoClock, fetchLetters } from './common.js';
 import { sound } from './sound.js';
 
 /* =========================================================
@@ -59,6 +59,9 @@ if (ph === 'today') {
   $('#i-dday').textContent = `${dday()} 💕`;
 }
 if (isDemoClock()) $('#demo-badge').hidden = false;
+
+/* 편지가 구글 시트에 모이는 설정이면 들어오자마자 받아 두기 (편지함·꽃밭이 바로 채워지도록) */
+fetchLetters();
 
 /* ---------- 🎲 내 캐릭터 ----------
    처음 들어오면 옷 색·머리가 무작위로 정해지고, 다음에 다시 와도 같은 모습으로 걸어요.

@@ -105,8 +105,9 @@ export async function init({ character: c, onProgress = () => {} } = {}) {
   colliders = [...env.colliders, ...props.colliders];
   boxes = props.boxes;
 
-  // 편지 한 통 = 꽃 한 송이, 동전은 던진 만큼
-  allLetters().forEach(l => props.plantFlower(l, false));
+  // 편지 한 통 = 꽃 한 송이 (시트에서 나중에 도착한 편지도 피어남), 동전은 던진 만큼
+  plantAll(false);
+  addEventListener('wedding:letters', () => plantAll(false));
   props.fountain.setCoins(coinCount());
 
   // 톡 누른 자리에 잠깐 보이는 표시
@@ -135,7 +136,7 @@ export async function init({ character: c, onProgress = () => {} } = {}) {
     idle(step);
   }
   // 주소 끝에 #debug 가 있으면 콘솔에서 만져 볼 수 있는 손잡이 (테스트용)
-  if (/debug/.test(location.hash)) window.__wv = { goTo: id => goTo(props.interactables.find(i => i.id === id)), takePhoto, enterMuseum, exitMuseum, cycleTime, startTour, stopTour, applyTime, state, props };
+  if (/debug/.test(location.hash)) window.__wv = { goTo: id => goTo(props.interactables.find(i => i.id === id)), takePhoto, enterMuseum, exitMuseum, cycleTime, startTour, stopTour, applyTime, state, props, flowerCount: () => props.flowerCount() };
 
   return {
     themes: museum.themes, start, setCharacter, enterMuseum: () => enterMuseum(), letterSent, takePhoto,
@@ -156,8 +157,16 @@ function start({ hint = true } = {}) {
 }
 function setCharacter(c) { character = { ...character, ...c }; if (player) swapPlayer(); }
 
+/* 꽃밭: 편지마다 한 번만 심기 (같은 편지가 시트에서 다시 와도 두 번 피지 않도록) */
+const planted = new Set();
+const letterKey = l => l.id || `${l.name}|${l.time || ''}`;
+function plantAll(animate) {
+  allLetters().forEach(l => { const k = letterKey(l); if (planted.has(k)) return; planted.add(k); props.plantFlower(l, animate); });
+}
+
 /* 편지를 보내면 꽃밭에 꽃이 피고, 내 캐릭터 주위로 편지가 날아요 */
 function letterSent(letter) {
+  if (letter) planted.add(letterKey(letter));
   const at = props.plantFlower(letter || { name: '하객', side: '신랑측' }, true);
   spawnHearts(scene, new THREE.Vector3(state.pos.x, 2.2 + state.y, state.pos.z), 10, '💌');
   if (at && state.mode === 'out' && !tour) {

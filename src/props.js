@@ -474,7 +474,7 @@ export function buildProps(scene) {
     [groom, bride].forEach(n => n.animate(dt, 0, t));
     if (playerPos) coupleUpdate(dt, playerPos);
   }
-  return { group, colliders, boxes, interactables, update, npcs: [groom, bride], plantFlower, fountain, bed: BED };
+  return { group, colliders, boxes, interactables, update, npcs: [groom, bride], plantFlower, flowerCount: () => flowers.length, fountain, bed: BED };
 }
 
 function buildMuseumExterior(group, colliders, boxes, updaters) {

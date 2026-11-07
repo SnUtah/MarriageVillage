@@ -1,4 +1,4 @@
-import { formatKDate, dday, weddingDate, placeholderCanvas, buzz, photoURL, allLetters, saveLetter, shortDate, now, phase, currentStep } from './common.js';
+import { formatKDate, dday, weddingDate, placeholderCanvas, buzz, photoURL, allLetters, saveLetter, fetchLetters, lettersRemote, lettersStatus, shortDate, now, phase, currentStep } from './common.js';
 import { sound } from './sound.js';
 
 /* =========================================================
@@ -363,20 +363,22 @@ export function coupleView({ greeting = true } = {}) {
 export function showCouple() { openView('신랑 · 신부', coupleView()); }
 
 /* ---------- ✉️ 편지함: 봉투 목록 + 편지 쓰기 ----------
-   편지는 서버 없이 이 페이지 안에서 완결됩니다.
-   봉투를 누르면 편지지가 펼쳐지고, 쓴 편지는 그 휴대폰에 보관돼요. */
+   봉투를 누르면 편지지가 펼쳐집니다.
+   기본은 서버 없이 이 페이지 안에서 완결(쓴 편지는 그 휴대폰에 보관)되고,
+   config.js에 lettersSheet가 있으면 편지가 구글 시트로 모이고 모두가 함께 봅니다. */
 const sideClass = l => (l.side === '신부측' ? 'bride' : 'groom');
 const envelopeHTML = (l, i) => `
-  <button type="button" class="env ${sideClass(l)}${l.mine ? ' mine' : ''}" data-i="${i}" aria-label="${esc(l.name)}의 편지 열기">
+  <button type="button" class="env ${sideClass(l)}${l.mine ? ' mine' : ''}${l.pending ? ' pending' : ''}" data-i="${i}" aria-label="${esc(l.name)}의 편지 열기">
     <span class="flap" aria-hidden="true"></span>
-    <span class="seal" aria-hidden="true">${l.mine ? '✍️' : '💌'}</span>
+    <span class="seal" aria-hidden="true">${l.pending ? '⏳' : l.mine ? '✍️' : '💌'}</span>
     <b class="env-name">${esc(l.name)}</b>
-    <small class="env-meta">${esc(l.side || '')}${l.side ? ' · ' : ''}${shortDate(l.time)}</small>
+    <small class="env-meta">${l.pending ? '보내는 중' : `${esc(l.side || '')}${l.side ? ' · ' : ''}${shortDate(l.time)}`}</small>
   </button>`;
 
 export function mailboxView(onSent, { onBack } = {}) {
+  const remote = lettersRemote();
   const html = `
-    <p class="muted" style="line-height:1.7">두 사람에게 축하의 한마디를 남겨주세요.<br>편지는 봉투에 담겨 편지함에 보관돼요 💌</p>
+    <p class="muted" style="line-height:1.7">두 사람에게 축하의 한마디를 남겨주세요.<br>${remote ? '편지는 신랑신부에게 바로 전해지고, 편지함에서 함께 볼 수 있어요 💌' : '편지는 봉투에 담겨 편지함에 보관돼요 💌'}</p>
     <form class="letter-form" autocomplete="off">
       <input class="field l-name" maxlength="20" placeholder="이름" aria-label="이름" />
       <div class="seg l-side"><button type="button" data-v="신랑측" class="on">🤵 신랑측</button><button type="button" data-v="신부측">👰 신부측</button></div>
@@ -386,6 +388,7 @@ export function mailboxView(onSent, { onBack } = {}) {
     <div class="divider"></div>
     <div class="env-head"><b>💌 도착한 편지</b><span class="muted l-count"></span></div>
     <p class="muted" style="font-size:12.5px;margin:0 0 10px">봉투를 누르면 편지지가 펼쳐져요 · ✍️ 는 내가 쓴 편지</p>
+    <p class="muted l-status" role="status" hidden></p>
     <div class="env-grid l-list"></div>`;
   const mount = root => {
     let side = '신랑측';
@@ -393,39 +396,61 @@ export function mailboxView(onSent, { onBack } = {}) {
       root.querySelectorAll('.l-side button').forEach(x => x.classList.remove('on'));
       b.classList.add('on'); side = b.dataset.v;
     });
-    const listEl = root.querySelector('.l-list'), countEl = root.querySelector('.l-count');
+    const listEl = root.querySelector('.l-list'), countEl = root.querySelector('.l-count'), statusEl = root.querySelector('.l-status');
     const back = onBack || (() => showMailbox(onSent));
+    // 시트 연결 상태: 불러오는 중 · 실패(다시 시도) · 마지막 사본
+    const paintStatus = () => {
+      if (!remote) { statusEl.hidden = true; return; }
+      const s = lettersStatus();
+      statusEl.hidden = false;
+      if (s.loading && !s.loaded) statusEl.textContent = '편지를 불러오는 중…';
+      else if (s.error && !s.loaded) {
+        statusEl.innerHTML = '지금은 편지를 불러올 수 없어요. <button type="button" class="linklike l-retry">다시 시도</button>';
+        statusEl.querySelector('.l-retry').onclick = () => { fetchLetters({ force: true }); paintStatus(); };
+      }
+      else if (s.error) statusEl.textContent = '마지막으로 받아 온 편지예요 (지금은 연결이 어려워요)';
+      else statusEl.hidden = true;
+    };
     const render = () => {
       const list = allLetters();
       countEl.textContent = list.length ? `${list.length}통` : '';
       listEl.innerHTML = list.length
         ? list.slice(0, 60).map(envelopeHTML).join('')
-        : '<p class="muted">아직 편지가 없어요. 첫 편지를 남겨주세요!</p>';
+        : `<p class="muted">${remote && lettersStatus().loading && !lettersStatus().loaded ? '' : '아직 편지가 없어요. 첫 편지를 남겨주세요!'}</p>`;
       listEl.querySelectorAll('.env').forEach(b => b.onclick = () => {
         buzz(8);
         b.classList.add('open');
         setTimeout(() => showLetter(list, +b.dataset.i, back), stillMotion() ? 0 : 260);
       });
+      paintStatus();
     };
     render();
+    const onUpdate = () => render();
+    if (remote) { addEventListener('wedding:letters', onUpdate); fetchLetters(); paintStatus(); }
     const form = root.querySelector('.letter-form'), btn = root.querySelector('.l-send');
-    form.onsubmit = e => {
+    form.onsubmit = async e => {
       e.preventDefault();
       const name = root.querySelector('.l-name').value.trim();
       const message = root.querySelector('.l-msg').value.trim();
       if (!name || !message) { toast('이름과 메시지를 적어주세요'); return; }
+      const label = btn.textContent;
       btn.disabled = true;
-      saveLetter({ name, side, message, time: new Date().toISOString() });
+      if (remote) btn.textContent = '보내는 중…';
+      const r = await saveLetter({ name, side, message, time: new Date().toISOString() });
+      btn.textContent = label;
+      btn.disabled = false;
+      if (!root.isConnected) return; // 보내는 사이에 창이 닫힘
       root.querySelector('.l-msg').value = '';
-      toast('💌 편지가 편지함에 들어갔어요. 감사합니다!');
+      if (r.ok) toast(remote ? '💌 편지가 두 사람에게 전해졌어요. 감사합니다!' : '💌 편지가 편지함에 들어갔어요. 감사합니다!');
+      else toast('💌 편지를 휴대폰에 보관했어요. 연결되면 자동으로 전해드릴게요', 3600);
       confetti(['💌', '💗', '✨']);
       buzz(20);
       sound.sfx('paper');
-      onSent?.({ name, side, message });
+      onSent?.(r.letter);
       render();
-      btn.disabled = false;
       listEl.querySelector('.env')?.scrollIntoView({ behavior: stillMotion() ? 'auto' : 'smooth', block: 'center' });
     };
+    return () => removeEventListener('wedding:letters', onUpdate);
   };
   return { html, mount };
 }

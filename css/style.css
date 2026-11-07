@@ -294,6 +294,9 @@ textarea.field { min-height: 110px; resize: none; }
 
 /* ---------- ✉️ 편지함: 봉투 목록 ---------- */
 .env-head { display: flex; align-items: baseline; justify-content: space-between; margin: 4px 0 4px; }
+.l-status { font-size: 12.5px; margin: 0 0 10px; }
+.linklike { background: none; border: 0; padding: 0; font: inherit; color: var(--rose-deep); text-decoration: underline; cursor: pointer; min-height: 0; }
+.env.pending { opacity: .75; border-style: dashed; }
 .env-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .env {
   position: relative; display: block; width: 100%; text-align: left; min-height: 98px; padding: 40px 12px 12px; overflow: hidden;

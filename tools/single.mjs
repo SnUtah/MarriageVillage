@@ -32,9 +32,7 @@ html = html
   .replace(/<script src="config.js"><\/script>/, () => `<script>\n${safeJS(config)}\n</script>`)
   .replace(/<!--[^>]*?원본은 src 폴더[^>]*?-->\s*/, '')
   .replace(/<script src="js\/app.js"><\/script>/, () => `<script>\n/* three.js r160 (MIT, https://threejs.org) 포함 · 원본 코드는 src 폴더 */\n${safeJS(app)}\n</script>`)
-  .replace(/<head>/, `<head>\n<!-- 공모전 제출용 한 파일 버전 (디자인·설정·프로그램·일러스트 사진 포함). 내용을 바꾸려면 아래 window.WEDDING 설정을 수정하세요. -->`)
-  // 가족 축하 페이지 링크: 한 파일 버전은 같은 폴더에 있으므로 경로를 바꿈
-  .replace(/href="\.\.\/축하홈페이지\.html" data-single="([^"]+)"/, 'href="$1"');
+  .replace(/<head>/, `<head>\n<!-- 공모전 제출용 한 파일 버전 (디자인·설정·프로그램·일러스트 사진 포함). 내용을 바꾸려면 아래 window.WEDDING 설정을 수정하세요. -->`);
 
 for (const must of ['<style>', 'window.WEDDING', 'three.js r160']) {
   if (!html.includes(must)) { console.error(`❌ 합치기 실패: ${must} 없음`); process.exit(1); }

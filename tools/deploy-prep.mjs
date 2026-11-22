@@ -12,8 +12,10 @@ if (existsSync(resolve(root, 'photos'))) cpSync(resolve(root, 'photos'), resolve
 if (existsSync(resolve(root, 'music'))) cpSync(resolve(root, 'music'), resolve(out, 'music'), { recursive: true });
 if (existsSync(resolve(root, '.vercel'))) cpSync(resolve(root, '.vercel'), resolve(out, '.vercel'), { recursive: true });
 let html = readFileSync(resolve(root, 'index.html'), 'utf8');
-html = html.replace(/<!-- 인터넷에 올린 뒤[\s\S]*?-->/, `<meta property="og:url" content="${URL}/" />\n<meta property="og:image" content="${URL}/og.jpg" />\n<meta property="og:image:width" content="1200" />\n<meta property="og:image:height" content="630" />\n<meta name="twitter:card" content="summary_large_image" />`);
-html = html.replace(/\s*<hr \/>\s*<a href="\.\.\/축하홈페이지\.html"[^>]*>[^<]*<\/a>/, '');
+// 링크 미리보기(og) 주소를 이 사이트 주소(SITE_URL)로 바꿔요
+const setMeta = (prop, value) => { html = html.replace(new RegExp(`(<meta property="${prop}" content=")[^"]*(")`), (_, a, b) => a + value + b); };
+setMeta('og:url', `${URL}/`);
+setMeta('og:image', `${URL}/og.jpg`);
 writeFileSync(resolve(out, 'index.html'), html);
 writeFileSync(resolve(out, 'vercel.json'), '{\n  "cleanUrls": true,\n  "headers": [{ "source": "/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }] }]\n}\n');
 console.log('✅ _deploy 준비 완료 →', out);

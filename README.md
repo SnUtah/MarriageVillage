@@ -1,150 +1,164 @@
-# 💍 작은 결혼 마을 — 걸어서 구경하는 모바일 청첩장 템플릿
+# 💍 A little wedding village — a mobile wedding invitation you walk through
 
-하객이 휴대폰으로 들어와 **3D 캐릭터로 마을을 돌아다니며** 청첩장, 사진관, 편지함 등을 구경하는 결혼식 홈페이지입니다.
-서버 없이 **HTML 파일 하나**로 동작하고, 이름·날짜·사진·편지는 전부 `config.js` 한 파일에서 바꿉니다.
-(이 폴더의 이름·장소·편지·사진은 모두 **가상의 예시**입니다.)
+A wedding website for guests on their phones. Each guest **walks around a small 3D village as a character** and visits the invitation, the photo gallery, the mailbox and more.
+It runs from **one HTML file** with no server. Names, date, photos and letters all live in one file: `config.js`.
+(All names, places, letters and photos in this folder are **made-up examples**.)
 
-> 🌐 **살펴보기:** https://marriagevillage.vercel.app  ·  💻 **코드:** https://github.com/SnUtah/MarriageVillage  ·  📦 `한파일로_만들기.bat`으로 만든 `결혼마을.html` 하나로도 열립니다(인터넷 없이도 동작).
+> 🌐 **See it:** https://marriagevillage.vercel.app  ·  💻 **Code:** https://github.com/SnUtah/MarriageVillage  ·  📦 It also opens as the single file `결혼마을.html` made by `한파일로_만들기.bat` (works offline).
 
-## 마을에 있는 것들
+## What's in the village
 
-| 오브젝트 | 기능 |
+| Object | What it does |
 |---|---|
-| 💌 청첩장 (이젤) | 인사말, 양가 부모님, 달력, 실시간 카운트다운, 캘린더 추가(ics·구글), 공유 |
-| ✉️ 편지함 (빨간 우체통) | 봉투를 누르면 **편지지가 펼쳐지는** 축하 편지함. 쓴 편지는 그 휴대폰에 보관되거나, 구글 시트를 연결하면 **모두의 편지가 한곳에 모여** 함께 봐요 |
-| 🌷 편지 꽃밭 | 편지 한 통마다 우체통 옆에 꽃이 한 송이 핍니다 (신랑측 파랑 · 신부측 분홍) |
-| 🖼️ 추억 사진관 (뮤지엄) | 테마별 사진 전시 → 걸어다니며 관람, 크게 보기, 앨범 보기 |
-| 💐 신랑 · 신부 (웨딩 아치) | 다가오는 하객을 바라보고 말을 걸어요. 인사 + 손 흔들기, 연락하기 |
-| 🗺️ 오시는 길 (이정표) | 주소 복사, 네이버/카카오/티맵, 교통·주차 |
-| 🎁 마음 전하실 곳 (선물상자) | 신랑측/신부측 계좌 복사 (행 전체 탭) |
-| 🕰️ 오늘의 식순 (칠판) | 예식 당일엔 지금 진행 중인 순서 표시 |
-| ❓ 신랑신부 퀴즈 (부스) | 대기 시간용 퀴즈 |
-| 🪙 소원 분수 | 동전이 손에서 날아가 퐁당, 던진 동전은 물속에 쌓여요 |
-| 📸 포토존 | 신랑신부가 옆에 와서 **3·2·1** 폴라로이드 기념사진 → 공유·저장 |
+| 💌 Invitation (easel) | Greeting, both families, calendar, live countdown, add to calendar (ics · Google), share |
+| ✉️ Mailbox (red postbox) | Tap an envelope and **the letter unfolds**. Letters stay on the writer's phone, or, with a Google Sheet connected, **everyone's letters gather in one place** for all to read |
+| 🌷 Letter garden | One flower blooms next to the postbox for each letter (groom's side blue · bride's side pink) |
+| 🖼️ Photo gallery (museum) | Photos shown by theme → walk through, view large, open the album |
+| 💐 Groom · bride (wedding arch) | They turn to guests who come close and talk to them. Greeting + wave, contact buttons |
+| 🗺️ Directions (signpost) | Copy the address, Naver / Kakao / TMAP, transport and parking |
+| 🎁 Gift accounts (gift box) | Copy the groom's side / bride's side bank accounts (tap the whole row) |
+| 🕰️ Today's schedule (blackboard) | On the wedding day it shows the part happening now |
+| ❓ Couple quiz (booth) | A quiz for the waiting time |
+| 🪙 Wishing fountain | A coin flies from your hand and plops in; thrown coins pile up under the water |
+| 📸 Photo zone | The couple comes to stand next to you, **3 · 2 · 1**, polaroid souvenir photo → share or save |
 
-### 처음 오는 사람을 위한 장치
-- **🎲 내 캐릭터는 무작위**: 처음 들어오면 옷 색·머리가 저절로 정해지고, 다시 와도 같은 모습. 시작 화면과 메뉴에서 "다시 뽑기".
-- **🚶 자동 투어**: 조작을 몰라도 마을의 열 곳을 차례로 안내해요. 화면을 끌면 바로 멈춥니다.
-- **📖 글로 보기**: 3D 없이 청첩장·오시는 길·식순·앨범·편지함·계좌·퀴즈를 한 페이지로 읽는 모드. 3D가 안 되는 휴대폰은 자동으로 이 화면이 됩니다.
-- **가+ 큰 글씨**, 44px 이상 탭 영역, 휴대폰 뒤로가기 = 창 닫기, 움직임 줄이기 설정 존중.
-- **🌙 낮 · 노을 · 밤**: 기본은 낮이고 메뉴의 '낮 · 밤 바꾸기'로 노을·밤(가로등·별)으로 바꿀 수 있어요. `config.js`의 `skyMode: 'auto'`로 두면 접속 시각(한국시간)에 따라 자동으로 바뀝니다.
-- **🔊 오르골 배경음과 효과음**은 파일 없이 합성합니다 (기본 꺼짐, 오른쪽 위 버튼).
+### For first-time visitors
+- **🎲 Random character**: on the first visit, clothes colour and hair are picked at random, and the same look comes back next time. "Pick again" on the start screen and in the menu.
+- **🚶 Auto tour**: shows guests the ten places in order, no controls needed. Dragging the screen stops it.
+- **📖 Text view**: reads the invitation, directions, schedule, album, mailbox, accounts and quiz on one page without 3D. Phones that can't run 3D get this view automatically.
+- **A+ larger text**, tap areas of 44px or more, the phone's back button closes a window, and the "reduce motion" setting is respected.
+- **🌙 Day · sunset · night**: day by default. "Day · night" in the menu switches to sunset or night (streetlights, stars). With `skyMode: 'auto'` in `config.js`, it follows the time of the visit (Korea time).
+- **🔊 Music-box music and sound effects** are synthesised, no files needed (off by default, button at the top right).
+- **🌐 English · Korean**: the site opens in the device's language (Korean device → Korean, any other → English). The `EN · 한` button on the start screen and an item in the ☰ menu switch it, and the choice is remembered. `?lang=ko` or `?lang=en` at the end of the address opens that language.
 
-### 심사 · 테스트용 주소 꼬리표
-| 주소 끝에 | 효과 |
+### Address add-ons for reviewing and testing
+| Add to the address | What it does |
 |---|---|
-| `#demo` | 예식 당일 35분 전으로 시계가 흐름 → "오늘이에요", 진행 중인 식순, 당일 바로가기 |
-| `#now=2027-05-15T13:30` | 원하는 시각으로 시계 설정 |
-| `#night` / `#sunset` / `#day` | 하늘 고정 |
-| `#debug` | 콘솔에서 `__wv.goTo('fountain')` 처럼 바로 이동 |
+| `#demo` | The clock runs from 35 minutes before the ceremony → "today" screen, the part happening now, wedding-day shortcuts |
+| `#now=2027-05-15T13:30` | Sets the clock to any time you want |
+| `#night` / `#sunset` / `#day` | Fixes the sky |
+| `#debug` | Jump straight to a place from the console, e.g. `__wv.goTo('fountain')` |
+| `?lang=ko` / `?lang=en` | Opens in Korean / English (goes before any `#`, e.g. `/?lang=ko#demo`) |
 
-PC에서는 휴대폰 틀 옆에 소개 패널이 보이고, **🖥 넓게 보기**로 창 전체에서 볼 수 있어요. "둘러볼 곳" 체크리스트는 실제로 가 본 곳에 ✓가 붙습니다.
+On a PC, an info panel sits next to the phone frame, and **🖥 Wide view** fills the whole window. In the "Places to visit" checklist, a ✓ appears next to each place you have actually visited.
 
 ---
 
-## 1. 내용 바꾸기 → `config.js`
+## 1. Change the content → `config.js`
 
-`config.js`를 메모장이나 VS Code로 열어서 따옴표 안의 글자만 바꾸면 됩니다.
-이름, 날짜, 예식장, 인사말, 계좌, 식순, 퀴즈, 샘플 편지, 사진 테마가 전부 이 파일에 있습니다.
+Open `config.js` in Notepad or VS Code and change only the text inside the quotes.
+Names, date, venue, greeting, accounts, schedule, quiz, sample letters and photo themes are all in this file.
 
-- 날짜는 `'2027-05-15T13:00:00+09:00'` 형식 그대로 숫자만 바꿔주세요.
-- 지도 링크는 네이버 지도나 카카오맵에서 예식장을 검색한 뒤 **공유 → 링크 복사**한 주소를 넣으면 가장 정확합니다.
-- 이름을 바꾸면 `index.html` 윗부분의 `<title>`과 `og:title`(카톡 미리보기 제목)도 같이 바꿔주세요.
-- `letters`는 처음부터 편지함에 들어 있는 편지들입니다. 비워도 됩니다.
-- `coupleLines` 배열을 추가하면 신랑신부의 대사를 바꿀 수 있어요.
+- `window.WEDDING` holds the Korean text. `window.WEDDING_EN` at the end of the file holds the English text.
+- Keep the date format `'2027-05-15T13:00:00+09:00'` and change only the numbers.
+- For the most accurate map links, search for the venue in Naver Map or KakaoMap, then use **Share → Copy link**.
+- If you change the names, also change the top of `index.html`: `<title>` (English title), `<meta name="title-ko">` (Korean title), `description`, and `og:title` / `og:description` (the KakaoTalk link preview). The link preview has only one language; the sample's is in English.
+- `letters` are the letters already in the mailbox at the start. You can leave it empty.
+- Add a `coupleLines` array to change what the couple says (add one to `window.WEDDING_EN` too for English).
 
-## 2. 사진 넣기 → `photos/` 폴더
+### English version → `window.WEDDING_EN`
+- Same shape as `window.WEDDING`, text only. Anything you leave out shows the Korean text.
+- Dates, numbers, phone numbers, account numbers, links and colours always come from `window.WEDDING`.
+- Lists such as the schedule, quiz, letters and photo themes match up by position. Keep the same number and order of items as in the Korean block. Quiz options must be in the same order, because `answer` comes from the Korean block.
+- Keep the letter `side` values as `'신랑측'` (groom's side) or `'신부측'` (bride's side). They are shown in English automatically.
+- You have two choices:
+  - Write your own English text in this block, including the English names.
+  - Delete the whole block. Everyone then sees the Korean content; buttons and menus still switch language.
+- If you change the Korean names but the English block still says "Groom Kim" / "Bride Kim" (or has no names), the English block is skipped and English visitors see the Korean content.
 
-지금은 `demoPhotos: true` 라서 사진 폴더가 비어 있어도 **캔버스로 그린 일러스트**가 사진관을 채웁니다.
-실제 사진을 쓰려면 `config.js`에서 `demoPhotos: false`로 바꾸고:
+## 2. Add photos → `photos/` folder
+
+Right now `demoPhotos: true`, so even with empty photo folders, **illustrations drawn on a canvas** fill the gallery.
+To use real photos, set `demoPhotos: false` in `config.js`, then:
 
 ```
 photos/
-  wedding/    1.jpg 2.jpg 3.jpg ...   (웨딩 촬영)
-  childhood/  1.jpg 2.jpg ...         (어린 시절)
-  dating/     ...                     (연애 시절)
-  travel/     ...                     (함께한 여행)
-  family/     ...                     (우리 가족)
+  wedding/    1.jpg 2.jpg 3.jpg ...   (wedding shoot)
+  childhood/  1.jpg 2.jpg ...         (childhood)
+  dating/     ...                     (dating days)
+  travel/     ...                     (trips together)
+  family/     ...                     (our families)
 ```
 
-1. 테마 폴더에 사진을 **1.jpg, 2.jpg, 3.jpg …** 순서로 이름을 바꿔 넣습니다.
-2. `config.js`의 해당 테마 `count`를 사진 개수로 맞춥니다.
-3. (선택) 사진 설명: `captions: ['첫 데이트 🍝', '제주도에서', ...]`
+1. Rename the photos **1.jpg, 2.jpg, 3.jpg …** in order and put them in the theme folder.
+2. Set that theme's `count` in `config.js` to the number of photos.
+3. (Optional) Photo captions: `captions: ['First date 🍝', 'In Jeju', ...]` (in `window.WEDDING_EN` for English).
 
-> 💡 사진은 긴 변 1600px 정도로 줄여서 넣어주세요. 하객들이 휴대폰 데이터로 보기 때문에 원본(4~10MB)은 느리고 데이터를 많이 씁니다.
+> 💡 Shrink photos to about 1600px on the long side. Guests use mobile data, and originals (4–10 MB) are slow and use a lot of data.
 
-## 3. 편지함: 휴대폰 보관 또는 구글 시트로 모으기
+## 3. Mailbox: keep letters on phones, or collect them in a Google Sheet
 
-기본(`lettersSheet: ''`)은 서버가 없으므로 하객이 쓴 편지가 **그 하객의 휴대폰(브라우저)** 에 저장되고, `config.js`의 `letters`(샘플 편지)와 합쳐서 보여줍니다.
+By default (`lettersSheet: ''`) there is no server, so a guest's letter is saved **on that guest's phone (browser)** and shown together with the `letters` (sample letters) in `config.js`.
 
-모든 하객의 편지를 **구글 시트에 모으고 모두가 함께 보게** 하려면 [`tools/편지_시트_연결.md`](tools/편지_시트_연결.md) 대로 10분이면 돼요.
-구글 시트에 `tools/letters-sheet.gs`를 붙여 웹 앱으로 배포하고, 그 URL을 `config.js`의 `lettersSheet`에 넣습니다.
+To **collect every guest's letter in a Google Sheet and let everyone read them**, follow [`tools/편지_시트_연결.md`](tools/편지_시트_연결.md). It takes about 10 minutes.
+You paste `tools/letters-sheet.gs` into a Google Sheet, deploy it as a web app, and put its URL in `lettersSheet` in `config.js`.
 
-- 편지는 시트에 한 줄씩 쌓이고, 사이트의 편지함·편지 꽃밭·글로 보기에 모두 반영돼요.
-- 연결이 안 되는 동안 쓴 편지는 휴대폰에 보관됐다가 다음 접속 때 자동으로 보내져요.
-- 시트에서 행을 지우면 사이트에서도 사라져요. 시트 하나로 여러 결혼식을 쓰려면 `lettersSite`를 서로 다르게 적어요.
-- 실제 결혼식이면 `letters: []`로 샘플 편지를 비우세요.
+- Each letter becomes one row in the sheet. It shows up in the site's mailbox, letter garden and text view.
+- Letters written while the connection is down are kept on the phone and sent automatically on the next visit.
+- Deleting a row in the sheet removes the letter from the site too. To use one sheet for several weddings, give each one a different `lettersSite`.
+- For a real wedding, empty the sample letters with `letters: []`.
 
-> 🤖 프로그램을 몰라도 돼요: `AI에게_맡기기_프롬프트.txt`를 Claude나 ChatGPT에 붙여 넣으면 내용 바꾸기부터 편지 시트 연결, 인터넷에 올리기까지 AI가 단계별로 안내해요.
+> 🤖 No coding needed: paste `AI에게_맡기기_프롬프트.txt` into Claude or ChatGPT, and the AI guides you step by step, from changing the content to connecting the letter sheet and putting the site online.
 
-## 4. 미리보기
+## 4. Preview
 
-- **`index.html`을 더블클릭**하면 바로 열려요. PC에서는 가운데에 휴대폰 크기 화면으로 보여요.
-- **휴대폰으로 확인하기:** `미리보기.bat`을 더블클릭하고, 휴대폰을 PC와 **같은 와이파이**에 연결한 뒤 창에 적힌 `http://192.168.…:8000` 주소를 휴대폰 브라우저에 입력하세요.
+- **Double-click `index.html`** and it opens right away. On a PC it shows as a phone-sized screen in the middle.
+- **To check on your phone:** double-click `미리보기.bat`, connect your phone to **the same Wi-Fi** as the PC, and type the `http://192.168.…:8000` address shown in the window into the phone's browser.
 
-## 5. 한 파일로 만들기 / 인터넷에 올리기
+## 5. Make one file / put it online
 
-- `한파일로_만들기.bat` → 폴더 바로 위에 `결혼마을.html` 하나가 생깁니다 (카톡 전송용).
-- 이 저장소는 **Vercel**에 연결되어 있어 `main`에 푸시하면 https://marriagevillage.vercel.app 에 자동 배포됩니다. (`배포.bat`은 명령줄에서 바로 올리는 방법)
-- 카톡 미리보기 사진은 `og.jpg`이고 `index.html`의 `og:image` 주소를 자기 주소로 바꿔주세요.
+- `한파일로_만들기.bat` → one file, `결혼마을.html`, appears right above the project folder (for sending by KakaoTalk).
+- This repository is connected to **Vercel**: pushing to `main` deploys it automatically to https://marriagevillage.vercel.app. (`배포.bat` uploads it straight from the command line.)
+- The KakaoTalk preview picture is `og.jpg`. Change the `og:image` address in `index.html` to your own address.
 
-## 6. 배경음악 (선택)
+## 6. Background music (optional)
 
-`music` 폴더에 mp3를 넣고 `config.js`의 `bgm: 'music/bgm.mp3'`로 적으면 합성 오르골 대신 그 음악이 나옵니다.
+Put an mp3 in a `music` folder and write `bgm: 'music/bgm.mp3'` in `config.js`. That music plays instead of the synthesised music box.
 
 ---
 
-## 조작법
+## Controls
 
-| | 휴대폰 | PC |
+| | Phone | PC |
 |---|---|---|
-| 걷기 | 화면 아무 곳이나 끌기 | WASD · 방향키 / 마우스로 끌기 |
-| 그 자리로 가기 | 톡 누르기 | 클릭 |
-| 구경하기 | 오른쪽 분홍 버튼 / 이름표 누르기 | E · Enter |
-| 창 닫기 | 뒤로가기 · 아래로 끌기 · ✕ | Esc |
-| 점프 / 하트 / 낮·밤 | ⤴ / 💗 / 메뉴 | Space / H / N |
+| Walk | Drag anywhere on the screen | WASD · arrow keys / drag with the mouse |
+| Go to a spot | Tap | Click |
+| Look at something | Pink button on the right / tap a name tag | E · Enter |
+| Close a window | Back · swipe down · ✕ | Esc |
+| Jump / heart / day · night | ⤴ / 💗 / menu | Space / H / N |
 
-## 파일 구성
+## Files
 
 ```
-결혼마을/                   ← 이 폴더를 통째로 인터넷에 올리면 돼요
-├─ index.html               화면 뼈대 (더블클릭해서 열기)
-├─ config.js                ⭐ 내용 설정 (여기만 수정)
-├─ photos/                  사진 (비어 있으면 일러스트)
-├─ music/                   배경음악 (선택)
-├─ css/style.css            디자인 (모바일 우선)
-├─ js/app.js                프로그램 (src 폴더의 코드를 한 파일로 묶은 것, 3D 라이브러리 포함)
-├─ 한파일로_만들기.bat       결혼마을.html 한 파일로 합치기 (Node.js 필요)
-├─ 미리보기.bat             휴대폰에서 미리보기 (같은 와이파이)
-├─ AI에게_맡기기_프롬프트.txt  Claude·ChatGPT에 붙여 넣으면 내용 바꾸기~편지 시트~배포를 AI가 안내
-├─ tools/편지_시트_연결.md    편지를 구글 시트에 모으는 방법 · tools/letters-sheet.gs 시트에 붙일 스크립트
-├─ tools/single.mjs         한 파일 합치기 스크립트 · tools/demo-preview.html 일러스트 미리보기
-└─ src/                     프로그램 원본 코드
-   ├─ 빌드.bat      원본 코드를 고친 뒤 실행 → js/app.js 다시 만들기
-   ├─ main.js       시작 화면, 메뉴, 캐릭터 뽑기, 3D 불러오기 (안 되면 글로 보기)
-   ├─ game.js       3D 마을: 조작, 카메라, 투어, 포토존, 낮·밤, 성능 조절
-   ├─ world.js      하늘(낮·노을·밤), 잔디, 나무, 가로등 불빛, 꽃잎
-   ├─ props.js      청첩장, 우체통, 꽃밭, 분수, 아치, 사진관 외관
-   ├─ museum.js     사진관 내부
-   ├─ character.js  캐릭터
-   ├─ ui.js         팝업 화면들, 편지지, 뒤로가기, 사진 확대
-   ├─ textview.js   📖 글로 보기
-   ├─ demo-photos.js 캔버스 일러스트 사진
-   ├─ sound.js      합성 오르골 · 효과음
-   ├─ common.js     날짜·시계, 사진 목록, 편지 보관 (3D 없이도 동작)
-   ├─ util.js       3D 공용 도구
-   └─ vendor/       3D 라이브러리 (three.js r160, MIT 라이선스)
+결혼마을/                   ← put this whole folder online
+├─ index.html               page skeleton (double-click to open)
+├─ config.js                ⭐ content settings (edit only this): window.WEDDING (Korean) + window.WEDDING_EN (English)
+├─ photos/                  photos (illustrations if empty)
+├─ music/                   background music (optional)
+├─ css/style.css            design (mobile first)
+├─ js/app.js                the program (code from the src folder bundled into one file, 3D library included)
+├─ 한파일로_만들기.bat       join everything into one file, 결혼마을.html (needs Node.js)
+├─ 미리보기.bat             preview on your phone (same Wi-Fi)
+├─ AI에게_맡기기_프롬프트.txt  paste into Claude or ChatGPT; the AI guides you from content to the letter sheet to going online
+├─ tools/편지_시트_연결.md    how to collect letters in a Google Sheet · tools/letters-sheet.gs the script for the sheet
+├─ tools/single.mjs         script that joins everything into one file · tools/demo-preview.html illustration preview
+└─ src/                     the program's source code
+   ├─ 빌드.bat      run after changing the source code → rebuilds js/app.js
+   ├─ main.js       start screen, menu, character pick, loading 3D (falls back to text view)
+   ├─ i18n.js       English / Korean: picking the language, the switch, the English config
+   ├─ game.js       3D village: controls, camera, tour, photo zone, day · night, performance
+   ├─ world.js      sky (day · sunset · night), grass, trees, streetlight glow, petals
+   ├─ props.js      invitation, postbox, flower garden, fountain, arch, gallery building
+   ├─ museum.js     inside the gallery
+   ├─ character.js  characters
+   ├─ ui.js         popups, letter paper, back button, photo zoom
+   ├─ textview.js   📖 text view
+   ├─ demo-photos.js canvas illustration photos
+   ├─ sound.js      synthesised music box · sound effects
+   ├─ common.js     date and clock, photo list, letter storage (works without 3D)
+   ├─ util.js       shared 3D tools
+   └─ vendor/       3D library (three.js r160, MIT license)
 ```
 
-> `config.js`와 `photos`만 바꿀 때는 아무것도 다시 만들 필요 없어요.
-> `src` 폴더의 코드를 고쳤을 때만 `src/빌드.bat`을 실행하세요 (Node.js 필요, 처음 한 번 인터넷 연결 필요).
+> When you change only `config.js` and `photos`, nothing needs rebuilding.
+> Run `src/빌드.bat` only after changing code in the `src` folder (needs Node.js and, the first time, an internet connection).

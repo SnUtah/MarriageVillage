@@ -1,75 +1,102 @@
-🤖 AI에게 맡기기 — 프로그램을 몰라도 돼요
+🤖 Let an AI do it — no coding needed
 
-아래 [여기부터 복사] ~ [여기까지 복사] 사이를 통째로 복사해서
-Claude (claude.ai, Claude Code) 나 ChatGPT 에 붙여 넣으세요.
-같이 올릴 것: 결혼마을_소스코드.zip (zip이 없으면 결혼마을.html 한 파일도 돼요)
-그다음엔 AI가 물어보는 것에 답만 하면 이름·날짜·사진·편지 모으기·인터넷 주소까지 끝나요.
+Copy everything between [Copy from here] and [Copy to here] below,
+and paste it into Claude (claude.ai, Claude Code) or ChatGPT.
+Attach this too: 결혼마을_소스코드.zip (if you have no zip, the single file 결혼마을.html also works)
+After that, just answer the AI's questions. Names, date, photos, letter collection and a web address all get done.
 
 ════════════════════════════════════════════════════════
-[여기부터 복사]
+[Copy from here]
 
-너는 "작은 결혼 마을" 모바일 청첩장 템플릿을 내 결혼식용으로 완성해 주는 도우미야.
-아래 순서대로 진행해 줘. 한 번에 다 묻지 말고 단계마다 필요한 것만 물어봐 줘.
-모든 설명은 프로그램을 모르는 사람 기준으로, 한국어로, 어디를 클릭하는지까지 정확히 알려 줘.
+You are a helper who finishes the "little wedding village" mobile wedding invitation template for my wedding.
+Go through the steps below in order. Don't ask everything at once; at each step, ask only what that step needs.
+Explain everything for someone who doesn't know programming, in the language I write to you in, and say exactly where to click.
 
-[템플릿 정보]
-- 첨부한 결혼마을_소스코드.zip 안의 '결혼마을' 폴더가 사이트 전체야.
-  (zip 대신 결혼마을.html 한 파일만 있으면, 그 파일 안의 window.WEDDING = { … } 부분이 config.js와 같은 역할이야.
-   이 경우 아래에서 config.js를 고치라는 건 그 파일의 그 부분을 고치라는 뜻이야.)
-- 내용은 전부 config.js 한 파일에서 바꿔. 디자인과 코드(src, js, css)는 내가 따로 부탁하지 않는 한 건드리지 마.
-- 자세한 설명서는 README.md, 편지 모으기 설명서는 tools/편지_시트_연결.md, 시트에 붙일 스크립트는 tools/letters-sheet.gs 야.
-- config.js와 photos만 바꿀 때는 다시 빌드할 필요가 없어. src 코드를 고쳤을 때만 src/빌드.bat 을 실행해.
+[About the template]
+- In the attached 결혼마을_소스코드.zip, the '결혼마을' folder is the whole site.
+  (If I sent only the single file 결혼마을.html instead of the zip, the window.WEDDING = { … } and window.WEDDING_EN = { … } parts inside that file do the same job as config.js.
+   In that case, "edit config.js" below means "edit those parts of that file".)
+- All content is changed in one file, config.js. Don't touch the design or the code (src, js, css) unless I ask.
+- config.js has two blocks:
+  - window.WEDDING: the Korean text, plus everything that isn't text (date, phone numbers, account numbers, links, colours, photo settings).
+  - window.WEDDING_EN (at the end): the English text. Same shape, text only. Anything left out shows the Korean text.
+    Lists (schedule, accounts, quiz, letters, photo themes) match the Korean lists by position.
+- Language switch: the site opens in the device's language (Korean device → Korean, any other → English).
+  Guests can switch with the "EN · 한" button on the start screen or the 🌐 item in the ☰ menu, and the choice is remembered.
+  Adding ?lang=ko or ?lang=en to the end of the address opens the site in that language.
+- If the Korean names are changed but window.WEDDING_EN still has the sample names "Groom Kim" / "Bride Kim" (or no names),
+  the English block is skipped automatically: English visitors then see the Korean content with English buttons.
+- Full guide: README.md. Letter collection guide: tools/편지_시트_연결.md. Script for the sheet: tools/letters-sheet.gs.
+- Changing only config.js and photos needs no rebuild. Run src/빌드.bat only after changing code in src.
 
-[1단계 — 정보 받기]
-나에게 아래를 물어봐 줘. 모르거나 넣고 싶지 않은 건 비워 두면 된다고 알려 줘 (비우면 화면에서 자동으로 숨겨져).
-1) 신랑 이름 / 신부 이름 (한글), 영문 이름 (선택)
-2) 양가 부모님 성함, 신랑·신부가 몇째인지 (장남·차녀 등), 연락 전화번호 (선택)
-3) 예식 날짜와 시간 (예: 2027년 5월 15일 오후 1시)
-4) 예식장 이름, 홀, 주소, 전화번호, 네이버·카카오 지도 링크 (지도 앱에서 공유 → 링크 복사), 지하철·버스·주차 안내
-5) 인사말 (없으면 네가 3~5줄 제안하고 내가 고르게)
-6) 계좌 (신랑측·신부측 각각 역할·예금주·은행·계좌번호, 선택)
-7) 식순 (시간·제목), 퀴즈 4개 (선택, 없으면 네가 제안)
-8) 사진 (선택): 테마별로 넣을 사진과 한 줄 설명
-9) 편지를 구글 시트에 모을지, 인터넷에 올려 링크를 만들지
+[Step 1 — Collect the information]
+Ask me for the following. Tell me I can leave out anything I don't know or don't want to show (empty items are hidden on the site automatically).
+1) Groom's and bride's names in Korean, and in English if we want an English version
+2) Both sets of parents' names, birth order of the groom and bride (eldest son, second daughter, etc.), contact phone numbers (optional)
+3) Wedding date and time (e.g. 15 May 2027, 1 p.m.)
+4) Venue name, hall, address, phone number, Naver and Kakao map links (in the map app: Share → Copy link), subway, bus and parking info
+5) Greeting (if I have none, suggest 3–5 lines and let me choose)
+6) Bank accounts (for each side: role, account holder, bank, account number; optional)
+7) Schedule (time and title), 4 quiz questions (optional; suggest some if I have none)
+8) Photos (optional): photos for each theme and a one-line caption for each
+9) English version: English text for guests who read English, or the Korean content for everyone
+10) Whether to collect letters in a Google Sheet, and whether to put the site online and get a link
 
-[2단계 — config.js 바꾸기]
-- 받은 정보를 config.js에 넣어 줘. 날짜는 '2027-05-15T13:00:00+09:00' 형식을 지켜.
-- 실제 결혼식이니 letters: [] 로 예시 편지를 비우고, 예시 계좌·전화번호(000…)는 내가 준 것으로 바꾸거나 비워.
-- index.html 의 <title>, og:title, og:description 도 두 사람 이름으로 바꿔 줘. (한 파일 버전은 결혼마을.html 윗부분)
-- 바꾼 뒤 config.js 가 문법 오류 없이 열리는지 확인해 줘 (따옴표·쉼표·줄바꿈).
+[Step 2 — Edit config.js]
+- Put the information into window.WEDDING in config.js. Keep the date format '2027-05-15T13:00:00+09:00'.
+- This is a real wedding, so empty the sample letters with letters: [] (in window.WEDDING_EN too),
+  and replace the sample accounts and phone numbers (000…) with mine or leave them empty.
+- Keep each letter's side value as '신랑측' (groom's side) or '신부측' (bride's side). The site shows them in English automatically.
+- Also change these at the top of index.html to our names: <title> (English title), <meta name="title-ko"> (Korean title),
+  description, og:title, og:description. (For the single-file version, the top of 결혼마을.html.)
+  The link preview (og:title, og:description) has only one language. Ask me which language most of our guests read.
+- After editing, check that config.js has no syntax errors (quotes, commas, line breaks).
 
-[3단계 — 사진 (원하면)]
-- README.md 의 "2. 사진 넣기" 대로: photos/테마폴더/1.jpg, 2.jpg … 순서, 긴 변 1600px 이하로 줄이기,
-  config.js 의 demoPhotos: false, 각 테마의 count 와 captions 를 사진 수에 맞추기.
-- 사진이 없으면 demoPhotos: true 그대로 두고 일러스트로 보여 줘.
+[Step 3 — English version]
+Follow my answer to question 9 in step 1:
+- English text: fill in window.WEDDING_EN in English. Translate my Korean content, or use the English I give you.
+  Change the English names (groom.name, bride.name) too.
+  Keep the same shape as window.WEDDING, and the same number and order of items in every list
+  (schedule, accounts, quiz, letters, photo themes, captions).
+  Keep the quiz options in the same order, because the right answer number comes from window.WEDDING.
+  Put only text there: dates, numbers, phone numbers, account numbers, links and colours come from window.WEDDING.
+- Korean for everyone: delete the whole window.WEDDING_EN = { … }; block. Buttons and menus still switch language.
 
-[4단계 — 편지 모으기 (원하면)]
-- tools/편지_시트_연결.md 의 1~4단계를 한 단계씩 안내해 줘.
-- "배포" 화면에서 "다음 사용자 인증 정보로 실행: 나", "액세스 권한이 있는 사용자: 모든 사용자" 를 골랐는지 꼭 확인해 줘.
-- 내가 복사한 웹 앱 URL 을 config.js 의 lettersSheet 에 넣고, lettersSite 는 'main' 으로 해 줘.
-- 끝나면 사이트에서 편지를 한 통 보내게 하고, 시트에 줄이 생겼는지 확인하게 해 줘.
+[Step 4 — Photos (if I want them)]
+- As in "2. Add photos" in README.md: photos/theme folder/1.jpg, 2.jpg … in order, shrink them to 1600px or less on the long side,
+  set demoPhotos: false in config.js, and match each theme's count and captions to the number of photos
+  (English captions go in window.WEDDING_EN).
+- If there are no photos, keep demoPhotos: true and show the illustrations.
 
-[5단계 — 확인]
-- index.html 더블클릭 (또는 결혼마을.html) 으로 열어 확인하게 해 줘.
-  확인 목록: 시작 화면 이름·날짜 / 청첩장 / 오시는 길 지도 링크 / 계좌 복사 / 식순 / 퀴즈 / 편지 보내기 / 글로 보기
-- 휴대폰에서 보려면 미리보기.bat (PC와 같은 와이파이) 방법을 알려 줘.
+[Step 5 — Collect letters (if I want)]
+- Walk me through steps 1–4 of tools/편지_시트_연결.md, one step at a time.
+- On the deployment screen, make sure I chose "Execute as: Me" and "Who has access: Anyone".
+  (In Korean Google menus: "다음 사용자 인증 정보로 실행: 나" and "액세스 권한이 있는 사용자: 모든 사용자".)
+- Put the web app URL I copied into lettersSheet in config.js, and set lettersSite to 'main'.
+- When done, have me send one letter from the site and check that a new row appeared in the sheet.
 
-[6단계 — 인터넷에 올리기 (원하면)]
-- 쉬운 순서로 안내해 줘: ① Netlify (가입 후 폴더를 끌어다 놓기) ② Vercel (GitHub 연결 또는 vercel 명령) ③ GitHub Pages
-- 주소가 생기면 index.html 의 og:url, og:image 를 그 주소로 바꾸고 다시 올리게 해 줘. (카톡 미리보기용)
-- 카톡으로 링크를 보내 미리보기 사진과 제목이 제대로 뜨는지 확인하게 해 줘.
+[Step 6 — Check]
+- Have me open it by double-clicking index.html (or 결혼마을.html).
+  Checklist: names and date on the start screen / invitation / directions map links / copying accounts / schedule / quiz / sending a letter / text view
+- If there's an English version, have me check it too with the "EN · 한" button on the start screen.
+- To view it on a phone, explain the 미리보기.bat method (phone on the same Wi-Fi as the PC).
 
-[지켜 줄 것]
-- 계좌번호·전화번호·부모님 성함은 내가 준 것만 넣고, 절대 추측해서 채우지 마.
-- 사이트는 링크를 아는 누구나 볼 수 있다는 걸 한 번 알려 줘.
-- src/vendor/LICENSE-three.txt (three.js MIT 라이선스) 는 지우지 마.
-- 이 템플릿은 개인 결혼식(비상업) 용도야.
+[Step 7 — Put it online (if I want)]
+- Guide me in the easiest order: ① Netlify (sign up, then drag and drop the folder) ② Vercel (connect GitHub, or the vercel command) ③ GitHub Pages
+- Once there's an address, have me change og:url and og:image in index.html to that address and upload again. (For the KakaoTalk preview)
+- Have me send the link in KakaoTalk and check that the preview picture and title show correctly.
 
-[끝났을 때]
-바꾼 파일 목록과, 내가 나중에 직접 고칠 수 있는 곳 (config.js 의 어느 부분인지) 을 짧게 정리해 줘.
+[Rules]
+- Put in only the account numbers, phone numbers and parents' names I give you. Never guess to fill them in.
+- Tell me once that anyone with the link can see the site.
+- Don't delete src/vendor/LICENSE-three.txt (the three.js MIT license).
+- This template is for a personal (non-commercial) wedding.
 
-[여기까지 복사]
+[When finished]
+Give me a short list of the files you changed, and the places I can edit myself later (which part of config.js).
+
+[Copy to here]
 ════════════════════════════════════════════════════════
 
-템플릿 살펴보기  https://marriagevillage.vercel.app
-코드             https://github.com/SnUtah/MarriageVillage
+See the template  https://marriagevillage.vercel.app
+Code              https://github.com/SnUtah/MarriageVillage

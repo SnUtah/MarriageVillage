@@ -1,4 +1,4 @@
-/* 배포 폴더(_deploy) 만들기: 정적 파일만 복사하고 og 태그를 넣습니다. 배포.bat이 호출해요. */
+/* Make the deploy folder (_deploy): copies only the static files and sets the og tags. Called by 배포.bat. */
 import { cpSync, mkdirSync, rmSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,10 +12,10 @@ if (existsSync(resolve(root, 'photos'))) cpSync(resolve(root, 'photos'), resolve
 if (existsSync(resolve(root, 'music'))) cpSync(resolve(root, 'music'), resolve(out, 'music'), { recursive: true });
 if (existsSync(resolve(root, '.vercel'))) cpSync(resolve(root, '.vercel'), resolve(out, '.vercel'), { recursive: true });
 let html = readFileSync(resolve(root, 'index.html'), 'utf8');
-// 링크 미리보기(og) 주소를 이 사이트 주소(SITE_URL)로 바꿔요
+// Set the link preview (og) addresses to this site's address (SITE_URL)
 const setMeta = (prop, value) => { html = html.replace(new RegExp(`(<meta property="${prop}" content=")[^"]*(")`), (_, a, b) => a + value + b); };
 setMeta('og:url', `${URL}/`);
 setMeta('og:image', `${URL}/og.jpg`);
 writeFileSync(resolve(out, 'index.html'), html);
 writeFileSync(resolve(out, 'vercel.json'), '{\n  "cleanUrls": true,\n  "headers": [{ "source": "/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }] }]\n}\n');
-console.log('✅ _deploy 준비 완료 →', out);
+console.log('✅ _deploy ready →', out);

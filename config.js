@@ -1,12 +1,13 @@
 /* =========================================================
-   💍 결혼식 홈페이지 설정 파일
-   이 파일만 수정하면 이름·날짜·장소·사진·편지가 모두 바뀝니다.
-   (따옴표 ' ' 안의 글자만 바꿔주세요)
+   💍 Wedding website settings
+   Edit only this file and the names, date, place, photos and letters all change.
+   (Change only the text inside the quotes ' ')
+   The Korean text is in window.WEDDING; the English version is in window.WEDDING_EN at the end.
 
-   ※ 아래 내용은 모두 가상의 예시입니다. (공모전 제출용 샘플)
+   ※ Everything below is a made-up example. (Sample for a contest entry)
    ========================================================= */
 window.WEDDING = {
-  /* ---------- 신랑 · 신부 ---------- */
+  /* ---------- Groom · bride ---------- */
   groom: {
     name: '김신랑',
     nameEn: 'Groom',
@@ -28,10 +29,10 @@ window.WEDDING = {
     motherPhone: '',
   },
 
-  /* ---------- 예식 일시 (한국시간) ---------- */
+  /* ---------- Wedding date and time (Korea time) ---------- */
   date: '2027-05-15T13:00:00+09:00',
 
-  /* ---------- 예식 장소 (가상의 장소) ---------- */
+  /* ---------- Wedding venue (a made-up place) ---------- */
   venue: {
     name: '하늘정원 웨딩홀',
     hall: '5층 가든홀',
@@ -46,7 +47,7 @@ window.WEDDING = {
     parking: '건물 지하 주차장 2시간 무료 (안내데스크에서 주차권 수령)',
   },
 
-  /* ---------- 인사말 ---------- */
+  /* ---------- Greeting ---------- */
   greeting: `서로 다른 길을 걸어온 두 사람이
 이제 같은 곳을 바라보며 함께 걸어가려 합니다.
 
@@ -56,7 +57,7 @@ window.WEDDING = {
 기다리시는 동안 저희 작은 마을을
 천천히 둘러보시면 감사하겠습니다.`,
 
-  /* ---------- 마음 전하실 곳 (계좌, 예시) ---------- */
+  /* ---------- Gift accounts (bank accounts, example) ---------- */
   accounts: {
     groom: [
       { role: '신랑', name: '김신랑', bank: '국민은행', number: '000000-00-000000' },
@@ -70,7 +71,7 @@ window.WEDDING = {
     ],
   },
 
-  /* ---------- 오늘의 식순 ---------- */
+  /* ---------- Today's schedule ---------- */
   schedule: [
     { time: '12:00', title: '하객 입장 & 포토타임', desc: '포토부스에서 사진을 남겨주세요' },
     { time: '13:00', title: '예식 시작', desc: '신랑·신부 입장' },
@@ -79,7 +80,7 @@ window.WEDDING = {
     { time: '13:50', title: '연회장 식사', desc: '지하 1층 연회장' },
   ],
 
-  /* ---------- 신랑신부 퀴즈 (answer는 0부터 시작하는 정답 번호) ---------- */
+  /* ---------- Couple quiz (answer = number of the right option, counting from 0) ---------- */
   quiz: [
     { q: '두 사람이 처음 만난 곳은?', options: ['대학 동아리', '소개팅', '회사', '여행지'], answer: 0, comment: '같은 사진 동아리에서 처음 만났어요 📷' },
     { q: '연애 기간은 얼마나 될까요?', options: ['1년', '3년', '5년', '7년'], answer: 2, comment: '5년 동안 예쁘게 사랑했어요' },
@@ -87,10 +88,11 @@ window.WEDDING = {
     { q: '신혼여행지는 어디일까요?', options: ['하와이', '스위스', '발리', '제주도'], answer: 1, comment: '알프스에서 사진 많이 찍어올게요!' },
   ],
 
-  /* ---------- 축하 편지함 ----------
-     하객이 쓴 편지는 그 하객의 휴대폰(브라우저)에 저장되고,
-     아래 편지들은 처음부터 편지함에 들어 있는 편지입니다. (예시)
-     daysAgo = 며칠 전에 쓴 편지로 보일지 */
+  /* ---------- Mailbox ----------
+     Letters guests write are saved on that guest's phone (browser);
+     the letters below are in the mailbox from the start. (examples)
+     daysAgo = how many days ago the letter seems to have been written
+     side = '신랑측' (groom's side) or '신부측' (bride's side); keep these Korean values, they are shown in English automatically */
   letters: [
     { name: '민지', side: '신부측', daysAgo: 1, message: '친구야, 네가 웨딩드레스 입은 모습은 상상만 해도 눈물 나.\n스무 살 때 같이 밤새 떡볶이 먹던 게 엊그제 같은데… 평생 행복해야 해. 결혼 진심으로 축하해 💕' },
     { name: '준호', side: '신랑측', daysAgo: 2, message: '드디어 가는구나! 축구할 때 그 끈기로 신부님한테도 평생 잘해라.\n신혼여행 사진 많이 찍어 와. 진심으로 축하한다.' },
@@ -103,27 +105,27 @@ window.WEDDING = {
     { name: '삼촌', side: '신랑측', daysAgo: 15, message: '조카야, 결혼은 매일 서로를 다시 선택하는 일이란다.\n삼촌이 항상 응원한다. 축하한다!' },
   ],
 
-  /* ---------- 편지 모으기 (선택) ----------
-     비워 두면 편지는 쓴 사람의 휴대폰에만 저장돼요.
-     모든 하객의 편지를 구글 시트에 모으고 모두가 보게 하려면
-     tools/편지_시트_연결.md 대로 시트에 Apps Script를 붙여 배포한 뒤
-     그 '웹 앱 URL'을 lettersSheet에 넣으세요. (실제 결혼식이면 위 letters 예시는 비우기)
-     lettersSite = 시트 안의 탭 이름. 시트 하나로 여러 결혼식을 쓸 때 서로 다르게 적어요. */
+  /* ---------- Collecting letters (optional) ----------
+     Left empty, letters are saved only on the writer's phone.
+     To collect every guest's letters in a Google Sheet and let everyone see them,
+     attach the Apps Script to a sheet and deploy it as in tools/편지_시트_연결.md,
+     then put its 'web app URL' in lettersSheet. (For a real wedding, empty the sample letters above)
+     lettersSite = the tab name inside the sheet. Use different names when one sheet serves several weddings. */
   lettersSheet: '',
   lettersSite: 'main',
 
-  /* ---------- 하늘: 'day'(항상 낮) · 'dusk' · 'night' · 'auto'(접속 시각에 따라 낮·노을·밤) ----------
-     메뉴의 '낮 · 밤 바꾸기'로 하객이 직접 바꿀 수도 있어요. */
+  /* ---------- Sky: 'day' (always day) · 'dusk' · 'night' · 'auto' (day · dusk · night by the time of the visit) ----------
+     Guests can also change it with 'Day · night' in the menu. */
   skyMode: 'day',
 
-  /* ---------- 배경음악 (예: 'music/bgm.mp3', 비우면 없음) ---------- */
+  /* ---------- Background music (e.g. 'music/bgm.mp3'; empty = none) ---------- */
   bgm: '',
 
-  /* ---------- 사진 뮤지엄 ----------
-     demoPhotos: true  → 사진 폴더가 비어 있어도 캔버스로 그린 일러스트 사진으로 채워집니다.
-     실제 사진을 쓰려면 false로 바꾸고, photos 폴더 안에 테마별 폴더를 만들어
-     1.jpg, 2.jpg ... 순서로 넣으세요. (count = 사진 개수, ext = 확장자)
-     captions = 사진 설명 (순서대로, 없으면 비워도 됨) */
+  /* ---------- Photo museum ----------
+     demoPhotos: true  → even with empty photo folders, it fills up with illustrations drawn on a canvas.
+     To use real photos, change it to false, make a folder per theme inside the photos folder
+     and put the photos in as 1.jpg, 2.jpg ... (count = number of photos, ext = file extension)
+     captions = photo descriptions (in order; can be left empty) */
   demoPhotos: true,
   museum: {
     title: '우리의 추억 사진관',
@@ -157,6 +159,102 @@ window.WEDDING = {
         subtitle: '사랑을 알려주신 고마운 분들',
         folder: 'photos/family', count: 6, ext: 'jpg',
         captions: ['신랑 가족', '신부 가족', '양가 상견례', '할머니와 함께', '강아지 콩이도 함께', '모두 모여 한 컷'],
+      },
+    ],
+  },
+};
+
+/* =========================================================
+   🌐 English version of the text above.
+   Same shape; only text. Anything left out shows the Korean text.
+   Changed the names above? Change the English names too, or delete this block to show the Korean content to everyone.
+   (Dates, numbers, phone numbers, account numbers, links and colours are taken from above.)
+   ========================================================= */
+window.WEDDING_EN = {
+  groom: { name: 'Groom Kim', father: 'Father Kim', mother: 'Mother Kim', relation: 'eldest son' },
+  bride: { name: 'Bride Kim', father: 'Father Kim', mother: 'Mother Kim', relation: 'eldest daughter' },
+
+  venue: {
+    name: 'Sky Garden Wedding Hall',
+    hall: '5F Garden Hall',
+    address: '123 Sarang-ro, Haengbok-gu, Seoul',
+    subway: ['Line 2, Haengbok Station Exit 3, 5 min walk'],
+    bus: ['Blue bus 100, 200 · Get off at Haengbok Station'],
+    car: 'Search for "Sky Garden Wedding Hall" in your navigation app',
+    parking: 'Free underground parking in the building for 2 hours (get a ticket at the front desk)',
+  },
+
+  greeting: `Two people who walked different paths
+are now setting out on one path together.
+
+We hope you'll bless our new beginning
+with the warmth of a spring day.
+
+While you wait, we'd love for you
+to stroll around our little village.`,
+
+  accounts: {
+    groom: [
+      { role: 'Groom', name: 'Groom Kim', bank: 'KB Kookmin Bank' },
+      { role: "Groom's father", name: 'Father Kim', bank: 'Shinhan Bank' },
+      { role: "Groom's mother", name: 'Mother Kim', bank: 'Woori Bank' },
+    ],
+    bride: [
+      { role: 'Bride', name: 'Bride Kim', bank: 'KakaoBank' },
+      { role: "Bride's father", name: 'Father Kim', bank: 'NongHyup Bank' },
+      { role: "Bride's mother", name: 'Mother Kim', bank: 'Hana Bank' },
+    ],
+  },
+
+  schedule: [
+    { title: 'Guests arrive & photos', desc: 'Stop by the photo booth for a picture' },
+    { title: 'Ceremony begins', desc: 'The groom and bride walk in' },
+    { title: 'Wedding song & pronouncement' },
+    { title: 'Group photos', desc: 'Family → relatives → friends' },
+    { title: 'Lunch reception', desc: 'Banquet hall, B1' },
+  ],
+
+  quiz: [
+    { q: 'Where did we first meet?', options: ['College club', 'Blind date', 'At work', 'On a trip'], comment: 'We met in the same photo club 📷' },
+    { q: 'How long have we been together?', options: ['1 year', '3 years', '5 years', '7 years'], comment: 'Five lovely years together' },
+    { q: 'Who made the first move?', options: ['Groom', 'Bride', 'Both of us', "It's a secret"], comment: 'Under the cherry blossoms, with a shaky voice…🌸' },
+    { q: 'Where are we going on our honeymoon?', options: ['Hawaii', 'Switzerland', 'Bali', 'Jeju Island'], comment: "We'll bring back lots of photos from the Alps!" },
+  ],
+
+  letters: [
+    { name: 'Minji', message: 'My friend, just picturing you in a wedding dress makes me cry.\nIt feels like yesterday we stayed up all night eating tteokbokki at twenty… Be happy forever. Congratulations on your wedding 💕' },
+    { name: 'Junho', message: "You're finally doing it! Treat your bride well for life, with the same grit you show on the soccer field.\nTake lots of honeymoon photos. Congratulations, really." },
+    { name: 'Grandma', message: "My dear granddaughter, as long as you eat well and take care of each other, that's all Grandma wants.\nStay healthy and come visit often." },
+    { name: 'Your coworkers', message: 'Congratulations on your wedding, Groom Kim!\nYou kept smiling even through late nights at work. Now she gets to see that smile at home every day 😊' },
+    { name: 'Cousin Haeun', message: 'Sis!! You have to throw the bouquet to me 🙏\nCongratulations to my new brother-in-law too!' },
+    { name: 'Eunseok', message: 'I remember how shyly you first talked to her.\nThat bit of courage brought you all the way here. Be happy, my friend.' },
+    { name: 'Your high school teacher', message: 'Seeing my student grow up and start a family of her own moves me deeply.\nLive bravely and warmly, just as you always have.' },
+    { name: 'Soyoung', message: "Congratulations! Let's go back to Jeju like we did before. This time the four of us ✈️" },
+    { name: 'Uncle', message: 'My nephew, marriage means choosing each other again every day.\nYour uncle is always cheering for you. Congratulations!' },
+  ],
+
+  museum: {
+    title: 'Our photo gallery',
+    themes: [
+      {
+        title: 'Wedding shoot', subtitle: 'A record of our most exciting day',
+        captions: ['First shot, so excited', 'A smile brighter than the bouquet', 'Holding hands tight', 'Cherry blossom path', 'Fixing the dress train', 'Straightening the tux', 'Looking at each other', 'The two of us at sunset', 'Putting on the ring', 'In the tulip garden', 'Through the veil', 'Caught goofing around', 'Last shot, big smiles', 'Our very first shot'],
+      },
+      {
+        title: 'Childhood', subtitle: 'Before we met, when we were small and cute',
+        captions: ['First birthday', 'Kindergarten picnic', 'Balloon in the park', 'Lost a front tooth', 'First bike', 'Building a sandcastle', "On Grandma's lap", 'First day of school', 'Summer at the pool', 'Snowman on a snowy day'],
+      },
+      {
+        title: 'Dating days', subtitle: 'Ordinary days made special by laughing together',
+        captions: ['First date, that café', 'Outside the cinema', 'Biking by the Han River', 'The first snow', 'Night market date', 'Cherry blossom viewing', 'Birthday candles', 'Ferris wheel ride', 'Night walk', 'Dinner we made together', 'By the Christmas tree', 'Proposal day 💍'],
+      },
+      {
+        title: 'Trips together', subtitle: 'Together, we went farther',
+        captions: ['Jeju sea', 'Tokyo at night', 'Paris, Eiffel Tower', 'Snowy Alps', 'Bangkok night market', 'Haeundae, Busan', 'By the train window', 'Where to next?'],
+      },
+      {
+        title: 'Our families', subtitle: 'The people who taught us love',
+        captions: ["Groom's family", "Bride's family", 'Both families meet', 'With Grandma', 'With Kongi the puppy', 'Everyone together'],
       },
     ],
   },

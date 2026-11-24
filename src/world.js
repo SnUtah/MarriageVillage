@@ -2,22 +2,22 @@ import * as THREE from 'three';
 import { toon, mesh, canvasTex, rand, isMobile, gradientMap, reduceMotion } from './util.js';
 
 /* =========================================================
-   바깥 마을 환경: 하늘(낮·노을·밤), 잔디, 길, 나무, 꽃, 구름, 파티클
+   Outdoor village: sky (day · dusk · night), grass, paths, trees, flowers, clouds, particles
    ========================================================= */
 
 export const PATHS = [
   // [x1, z1, x2, z2, width]
-  [0, 34, 0, 10, 3.2],        // 입구 → 광장
-  [0, -2, 0, -19, 2.6],       // 광장 → 웨딩 아치 (버진로드)
-  [5, 1, 20, -5.5, 2.6],      // 광장 → 뮤지엄
-  [-6, 3, -12, 2, 2.4],       // 광장 → 선물상자
-  [-6, 0, -18, -10, 2.4],     // 광장 → 퀴즈
-  [6, 7, 10, 9, 2.2],         // 광장 → 식순 보드
-  [-2, 20, -10, 19, 2.2],     // 입구 → 포토존
+  [0, 34, 0, 10, 3.2],        // entrance → plaza
+  [0, -2, 0, -19, 2.6],       // plaza → wedding arch (aisle)
+  [5, 1, 20, -5.5, 2.6],      // plaza → museum
+  [-6, 3, -12, 2, 2.4],       // plaza → gift boxes
+  [-6, 0, -18, -10, 2.4],     // plaza → quiz
+  [6, 7, 10, 9, 2.2],         // plaza → schedule board
+  [-2, 20, -10, 19, 2.2],     // entrance → photo zone
 ];
 export const PLAZA = { x: 0, z: 4, r: 7.5 };
 
-/* 시간대별 색 (하늘 셰이더·안개·조명) */
+/* Colours per time of day (sky shader · fog · lights) */
 export const TIMES = {
   day:   { top: '#7EC8EE', mid: '#CDEBFA', horizon: '#FFE6D2', fog: '#FFE6D2', sun: '#FFEBD0', sunI: 2.4, hemi: '#FFF6EA', ground: '#C6DDB0', hemiI: 1.9, lamps: false, stars: false },
   dusk:  { top: '#6A7FC4', mid: '#F6A77A', horizon: '#FFD39B', fog: '#FFD39B', sun: '#FFB07A', sunI: 2.0, hemi: '#FFD3B0', ground: '#B8A890', hemiI: 1.6, lamps: true,  stars: false },
@@ -34,7 +34,7 @@ export function onPath(x, z, pad = 0.6) {
   return PATHS.some(p => distToSeg(x, z, p[0], p[1], p[2], p[3]) < p[4] / 2 + pad);
 }
 
-/* ---------- 하늘 (+ 밤하늘 별) ---------- */
+/* ---------- Sky (+ stars at night) ---------- */
 function makeSky() {
   const geo = new THREE.SphereGeometry(400, 32, 16);
   const mat = new THREE.ShaderMaterial({
@@ -60,7 +60,7 @@ function makeSky() {
   });
   const sky = new THREE.Mesh(geo, mat);
   sky.renderOrder = -1;
-  // 별 (밤에만)
+  // stars (night only)
   const n = 320, pos = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
     const a = rand(0, Math.PI * 2), e = rand(0.06, 1), r = 380;
@@ -81,7 +81,7 @@ function makeSky() {
   return sky;
 }
 
-/* ---------- 잔디 텍스처 ---------- */
+/* ---------- Grass texture ---------- */
 function grassTexture() {
   const c = document.createElement('canvas');
   c.width = c.height = 256;
@@ -115,7 +115,7 @@ function pathTexture() {
   return t;
 }
 
-/* ---------- 나무 ---------- */
+/* ---------- Trees ---------- */
 const trunkGeo = new THREE.CylinderGeometry(0.22, 0.32, 2, 8);
 const leafGeo = new THREE.IcosahedronGeometry(1.3, 1);
 export function tree(x, z, { kind = 'green', s = 1 } = {}) {
@@ -158,7 +158,7 @@ export function lamp(x, z) {
   return g;
 }
 
-/* 밤에 켜지는 가로등 불빛 (조명 계산 없이 스프라이트 + 바닥 빛 웅덩이) */
+/* Streetlight glow at night (no light calculation: a sprite + a pool of light on the ground) */
 let glowTex;
 function lampGlow(x, z) {
   if (!glowTex) {
@@ -225,7 +225,7 @@ export function balloons(x, z, h = 3.2) {
   return g;
 }
 
-/* ---------- 꽃 & 풀 (인스턴싱으로 가볍게) ---------- */
+/* ---------- Flowers & grass (instancing keeps it light) ---------- */
 function scatterFlora(scene, avoid) {
   const n = isMobile ? 500 : 900;
   const tuftGeo = new THREE.ConeGeometry(0.07, 0.4, 3);
@@ -262,7 +262,7 @@ function scatterFlora(scene, avoid) {
   scene.add(tufts, flowers);
 }
 
-/* ---------- 구름 ---------- */
+/* ---------- Clouds ---------- */
 function makeClouds(scene) {
   const clouds = [];
   const group = new THREE.Group();
@@ -288,7 +288,7 @@ function makeClouds(scene) {
   return { group, update };
 }
 
-/* ---------- 흩날리는 꽃잎 ---------- */
+/* ---------- Drifting petals ---------- */
 function petalTexture() {
   const c = document.createElement('canvas');
   c.width = c.height = 64;
@@ -337,7 +337,7 @@ function makePetals(scene) {
   };
 }
 
-/* ---------- 나비 ---------- */
+/* ---------- Butterflies ---------- */
 function makeButterflies(scene) {
   const group = new THREE.Group();
   scene.add(group);
@@ -365,7 +365,7 @@ function makeButterflies(scene) {
   return { group, update };
 }
 
-/* ---------- 하트·이모지 터지는 효과 (이모지별 텍스처는 한 번만 만듦) ---------- */
+/* ---------- Heart / emoji burst (each emoji texture is made only once) ---------- */
 const emojiTex = new Map();
 export function emojiTexture(emoji = '💗') {
   if (emojiTex.has(emoji)) return emojiTex.get(emoji);
@@ -390,7 +390,7 @@ export function spawnHearts(scene, pos, count = 10, emoji = '💗') {
     bursts.push({ sp, v: new THREE.Vector3(rand(-1, 1), rand(2, 3.5), rand(-1, 1)), life: 1.4 + Math.random() * 0.4, scene });
   }
 }
-/* 한 점에서 목표까지 포물선으로 날아가는 스프라이트 (분수 동전) */
+/* A sprite that flies in an arc from one point to a target (fountain coin) */
 export function throwSprite(scene, from, to, emoji = '🪙', T = 0.7, onLand) {
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: emojiTexture(emoji), transparent: true, depthWrite: false }));
   sp.position.copy(from);
@@ -415,7 +415,7 @@ function updateBursts(dt) {
 }
 
 /* =========================================================
-   환경 만들기
+   Build the environment
    ========================================================= */
 export function buildEnvironment(scene, avoid) {
   const group = new THREE.Group();
@@ -424,13 +424,13 @@ export function buildEnvironment(scene, avoid) {
   const sky = makeSky();
   scene.add(sky);
 
-  // 땅
+  // ground
   const ground = new THREE.Mesh(new THREE.CircleGeometry(160, 64), new THREE.MeshToonMaterial({ map: grassTexture(), gradientMap }));
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
   group.add(ground);
 
-  // 길
+  // paths
   const pTex = pathTexture();
   const pathMat = new THREE.MeshToonMaterial({ map: pTex, gradientMap, polygonOffset: true, polygonOffsetFactor: -1 });
   for (const [x1, z1, x2, z2, w] of PATHS) {
@@ -452,7 +452,7 @@ export function buildEnvironment(scene, avoid) {
       group.add(cap);
     }
   }
-  // 광장
+  // plaza
   const plaza = new THREE.Mesh(new THREE.CircleGeometry(PLAZA.r, 48), pathMat);
   plaza.rotation.x = -Math.PI / 2;
   plaza.position.set(PLAZA.x, 0.025, PLAZA.z);
@@ -463,29 +463,29 @@ export function buildEnvironment(scene, avoid) {
   ring.position.set(PLAZA.x, 0.03, PLAZA.z);
   group.add(ring);
 
-  // 가장자리 나무 숲 (경계)
+  // forest around the edge (boundary)
   const colliders = [];
   for (let i = 0; i < 46; i++) {
     const a = (i / 46) * Math.PI * 2 + rand(-0.04, 0.04);
     const r = rand(41, 46);
     const x = Math.cos(a) * r, z = Math.sin(a) * r;
-    if (Math.abs(x) < 4 && z > 30) continue; // 입구
+    if (Math.abs(x) < 4 && z > 30) continue; // entrance
     group.add(tree(x, z, { kind: i % 4 === 0 ? 'blossom' : 'green', s: rand(1.1, 1.6) }));
   }
   for (let i = 0; i < 30; i++) {
     const a = Math.random() * Math.PI * 2, r = rand(50, 75);
     group.add(tree(Math.cos(a) * r, Math.sin(a) * r, { kind: i % 3 === 0 ? 'blossom' : 'green', s: rand(1.4, 2.2) }));
   }
-  // 입구 아치 너머 언덕
+  // hills beyond the entrance arch
   for (let i = 0; i < 8; i++) {
     const hill = mesh(new THREE.SphereGeometry(1, 20, 12), i % 2 ? '#9CCB84' : '#AED596', rand(-120, 120), -rand(8, 14), -rand(90, 130));
     hill.scale.set(rand(25, 45), rand(18, 26), rand(20, 30));
     group.add(hill);
   }
 
-  // 안쪽 나무들
+  // inner trees
   const innerTrees = [
-    [-9, 27, 'blossom'], [14.5, 31, 'blossom'], [-24, 22, 'green'],   // (9,29)에 있던 벚나무는 편지 꽃밭을 가려서 오른쪽 뒤로 [24, 20, 'blossom'], [-30, 6, 'green'],
+    [-9, 27, 'blossom'], [14.5, 31, 'blossom'], [-24, 22, 'green'],   // the cherry tree that stood at (9,29) hid the letter garden, so it moved back and to the right [24, 20, 'blossom'], [-30, 6, 'green'],
     [30, 4, 'green'], [-28, -20, 'blossom'], [33, -20, 'green'], [-8, -28, 'green'], [8, -29, 'blossom'],
     [-15, 12, 'blossom'], [16, 14, 'green'], [-22, -2, 'green'], [11, -22, 'green'], [-12, -24, 'blossom'],
   ];
@@ -494,13 +494,13 @@ export function buildEnvironment(scene, avoid) {
     colliders.push({ x, z, r: 0.7 });
   });
 
-  // 덤불
+  // bushes
   [[-5, 28], [12.5, 27.5], [-14, 8], [13, 3], [-3, -21], [3, -21], [-26, 12], [26, 10], [-20, -18], [28, -8]].forEach(([x, z], i) => {
     group.add(bush(x, z, rand(0.9, 1.3), i % 3 === 0 ? '#A7D08F' : '#8CC47A'));
     colliders.push({ x, z, r: 0.9 });
   });
 
-  // 가로등 (+ 밤 불빛)
+  // streetlights (+ glow at night)
   const night = new THREE.Group();
   night.visible = false;
   group.add(night);
@@ -510,14 +510,14 @@ export function buildEnvironment(scene, avoid) {
     colliders.push({ x, z, r: 0.3 });
   });
 
-  // 벤치
+  // benches
   [[-6.3, 8.8, 2.4], [6.3, 8.8, -2.4], [-6.8, -0.5, 1.2], [6.8, -1.0, -1.2]].forEach(([x, z, r]) => {
     const b = bench(x, z, r);
     group.add(b);
     colliders.push({ x, z, r: 0.9 });
   });
 
-  // 풍선
+  // balloons
   const updaters = [];
   [[-2.5, 33], [2.5, 33], [-3.2, -17], [3.2, -17], [15.5, -7], [24.5, -7]].forEach(([x, z]) => {
     const b = balloons(x, z);
@@ -535,7 +535,7 @@ export function buildEnvironment(scene, avoid) {
   return {
     group, sky, colliders,
     get time() { return mode; },
-    /* 낮 · 노을 · 밤 */
+    /* day · dusk · night */
     setTime(m) {
       mode = TIMES[m] ? m : 'day';
       const p = TIMES[mode];
@@ -543,7 +543,7 @@ export function buildEnvironment(scene, avoid) {
       night.visible = p.lamps;
       return p;
     },
-    /* 느린 휴대폰: 1 = 꽃잎 절반, 2 = 구름·나비·꽃잎 끄기 */
+    /* Slow phones: 1 = fewer petals, 2 = clouds · butterflies · petals off */
     setLite(level) {
       petals.setCount(level >= 2 ? 0 : level === 1 ? 80 : 300);
       petals.group.visible = level < 2;

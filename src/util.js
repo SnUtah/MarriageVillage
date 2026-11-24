@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 
 export const isMobile = matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad/i.test(navigator.userAgent);
-/* 움직임을 줄여 달라는 설정 (휴대폰 접근성 설정 또는 메뉴의 '효과 줄이기') */
+/* 'Reduce motion' setting (phone accessibility setting, or 'reduce effects' in the menu) */
 export const reduceMotion = (() => {
   try { return matchMedia('(prefers-reduced-motion: reduce)').matches || localStorage.getItem('wedding-lite') === '1'; } catch { return false; }
 })();
 
-/* ---------- 툰 재질 (부드러운 3단 음영) ---------- */
+/* ---------- Toon material (soft 3-step shading) ---------- */
 export const gradientMap = (() => {
   const data = new Uint8Array([150, 150, 150, 255, 215, 215, 215, 255, 255, 255, 255, 255]);
   const tex = new THREE.DataTexture(data, 3, 1, THREE.RGBAFormat);
@@ -25,7 +25,7 @@ export function toon(color, opts = {}) {
   return m;
 }
 
-/* ---------- 그림자 설정 ---------- */
+/* ---------- Shadow settings ---------- */
 export function shadow(obj, cast = true, receive = true) {
   obj.traverse(o => { if (o.isMesh) { o.castShadow = cast; o.receiveShadow = receive; } });
   return obj;
@@ -38,7 +38,7 @@ export function mesh(geo, color, x = 0, y = 0, z = 0, opts) {
   return m;
 }
 
-/* ---------- 캔버스로 글자 텍스처 ---------- */
+/* ---------- Text texture drawn on a canvas ---------- */
 export function textCanvas(lines, {
   w = 512, h = 256, bg = '#FFFDF8', color = '#4A3B38', font = 'Gowun Batang', size = 56,
   radius = 40, border = null, sub = null, subSize = 30,
@@ -74,7 +74,7 @@ export function canvasTex(canvas) {
   return t;
 }
 
-/* ---------- 머리 위에 떠 있는 이름표 (긴 글은 자동으로 작게) ---------- */
+/* ---------- Name tag floating overhead (long text gets smaller automatically) ---------- */
 export function labelSprite(text, { scale = 4.2, bg = 'rgba(255,253,248,.95)', color = '#4A3B38' } = {}) {
   const c = document.createElement('canvas');
   c.width = 512; c.height = 128;
@@ -94,7 +94,7 @@ export function labelSprite(text, { scale = 4.2, bg = 'rgba(255,253,248,.95)', c
   return sp;
 }
 
-/* ---------- 날짜 도우미 (common.js에 있음) ---------- */
+/* ---------- Date helpers (they live in common.js) ---------- */
 export { weddingDate, formatKDate, dday } from './common.js';
 
 export const rand = (a, b) => a + Math.random() * (b - a);

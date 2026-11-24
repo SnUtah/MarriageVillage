@@ -1,12 +1,13 @@
+import { L } from './i18n.js';
 import * as UI from './ui.js';
 import { formatKDate, dday, photoThemes, phase } from './common.js';
 
 /* =========================================================
-   📖 글로 보기
-   3D 마을을 걷지 않아도 청첩장·오시는 길·식순·앨범·편지·계좌·퀴즈를
-   한 페이지에서 위에서 아래로 읽을 수 있는 화면입니다.
-   - 3D가 안 되는 휴대폰에서는 이 화면이 기본이 됩니다
-   - 팝업(ui.js)의 내용을 그대로 이어 붙여서 내용이 항상 같습니다
+   📖 Text view
+   A screen where the invitation, directions, schedule, album, letters, accounts and quiz
+   can be read top to bottom on one page, without walking the 3D village.
+   - On phones without 3D this is the default screen
+   - It strings together the same content as the popups (ui.js), so the content is always the same
    ========================================================= */
 const W = window.WEDDING;
 const $ = s => document.querySelector(s);
@@ -15,8 +16,8 @@ let cleanups = [], current = null;
 export const isReading = () => document.body.classList.contains('reading');
 
 const NAV = [
-  ['invitation', '💌 청첩장'], ['directions', '🗺️ 오시는 길'], ['schedule', '🕰️ 식순'], ['album', '🖼️ 앨범'],
-  ['mailbox', '✉️ 편지'], ['accounts', '🎁 마음'], ['quiz', '❓ 퀴즈'], ['couple', '📞 연락'],
+  ['invitation', L('💌 청첩장', '💌 Invitation')], ['directions', L('🗺️ 오시는 길', '🗺️ Directions')], ['schedule', L('🕰️ 식순', '🕰️ Schedule')], ['album', L('🖼️ 앨범', '🖼️ Album')],
+  ['mailbox', L('✉️ 편지', '✉️ Letters')], ['accounts', L('🎁 마음', '🎁 Gifts')], ['quiz', L('❓ 퀴즈', '❓ Quiz')], ['couple', L('📞 연락', '📞 Contact')],
 ];
 
 function sec(id, emoji, title, view, sub = '') {
@@ -43,38 +44,38 @@ export function openTextView({ canPlay = false, onPlay, onClose, onSent, section
     quiz: UI.quizView(),
     couple: UI.coupleView({ greeting: false }),
   };
-  const play = canPlay ? `<button class="btn-primary tv-play">🏡 3D 마을에서 구경하기</button>` : '';
+  const play = canPlay ? `<button class="btn-primary tv-play">${L('🏡 3D 마을에서 구경하기', '🏡 Explore the 3D village')}</button>` : '';
   tv.innerHTML = `
     <div class="tv-top">
-      <button class="tv-back" ${canPlay ? '' : 'hidden'} aria-label="3D 마을로 돌아가기">🏡 마을로</button>
-      <div class="tv-chips" role="navigation" aria-label="글로 보기 차례">
+      <button class="tv-back" ${canPlay ? '' : 'hidden'} aria-label="${L('3D 마을로 돌아가기', 'Back to the 3D village')}">${L('🏡 마을로', '🏡 Village')}</button>
+      <div class="tv-chips" role="navigation" aria-label="${L('글로 보기 차례', 'Text view sections')}">
         ${NAV.map(([k, l]) => `<button class="chip" data-go="${k}">${l}</button>`).join('')}
       </div>
-      <button class="fs-toggle tv-fs" aria-label="${UI.isBigFont() ? '글자 작게' : '글자 크게'}">${UI.isBigFont() ? '가-' : '가+'}</button>
+      <button class="fs-toggle tv-fs" aria-label="${UI.isBigFont() ? L('글자 작게', 'Smaller text') : L('글자 크게', 'Larger text')}">${UI.isBigFont() ? L('가-', 'A-') : L('가+', 'A+')}</button>
     </div>
     <div class="tv-inner">
       <header class="tv-hero">
         <div class="en">WEDDING INVITATION</div>
         <div class="tv-names">${UI.esc(W.groom.name)} <span class="heart">♥</span> ${UI.esc(W.bride.name)}</div>
-        <div class="muted">${date} ${time}<br>${UI.esc(W.venue.name)} ${UI.esc(W.venue.hall)}</div>
-        <div class="intro-dday">${phase() === 'today' ? '오늘이에요 🎉' : dday()}</div>
+        <div class="muted">${L(`${date} ${time}<br>${UI.esc(W.venue.name)} ${UI.esc(W.venue.hall)}`, `${date} · ${time}<br>${UI.esc(W.venue.name)}, ${UI.esc(W.venue.hall)}`)}</div>
+        <div class="intro-dday">${phase() === 'today' ? L('오늘이에요 🎉', "It's today 🎉") : dday()}</div>
         ${play}
-        <p class="muted tv-hint">${canPlay ? '게임이 어려우시면 그대로 아래로 내려서 읽어 주세요' : '아래로 내리면서 천천히 읽어 주세요'}</p>
+        <p class="muted tv-hint">${canPlay ? L('게임이 어려우시면 그대로 아래로 내려서 읽어 주세요', 'If the game is hard to use, just scroll down to read') : L('아래로 내리면서 천천히 읽어 주세요', 'Scroll down and take your time reading')}</p>
       </header>
-      ${sec('invitation', '💌', '청첩장', views.invitation)}
-      ${sec('directions', '🗺️', '오시는 길', views.directions)}
-      ${sec('schedule', '🕰️', '오늘의 식순', views.schedule)}
-      ${sec('album', '🖼️', W.museum?.title || '추억 사진관', views.album, '사진을 누르면 크게 볼 수 있어요')}
-      ${sec('mailbox', '✉️', '축하 편지함', views.mailbox)}
-      ${sec('accounts', '🎁', '마음 전하실 곳', views.accounts)}
-      ${sec('quiz', '❓', '신랑신부 퀴즈', views.quiz, '기다리시는 동안 가볍게 풀어 보세요')}
-      ${sec('couple', '📞', '신랑 · 신부에게 연락', views.couple)}
+      ${sec('invitation', '💌', L('청첩장', 'Invitation'), views.invitation)}
+      ${sec('directions', '🗺️', L('오시는 길', 'Directions'), views.directions)}
+      ${sec('schedule', '🕰️', L('오늘의 식순', "Today's schedule"), views.schedule)}
+      ${sec('album', '🖼️', W.museum?.title || L('추억 사진관', 'Photo gallery'), views.album, L('사진을 누르면 크게 볼 수 있어요', 'Tap a photo to see it larger'))}
+      ${sec('mailbox', '✉️', L('축하 편지함', 'Mailbox'), views.mailbox)}
+      ${sec('accounts', '🎁', L('마음 전하실 곳', 'Gift accounts'), views.accounts)}
+      ${sec('quiz', '❓', L('신랑신부 퀴즈', 'Couple quiz'), views.quiz, L('기다리시는 동안 가볍게 풀어 보세요', 'Something fun while you wait'))}
+      ${sec('couple', '📞', L('신랑 · 신부에게 연락', 'Contact the couple'), views.couple)}
       <footer class="tv-foot">
         <div class="btns" style="justify-content:center">
-          <button class="btn tv-share">🔗 청첩장 공유하기</button>
-          ${canPlay ? '<button class="btn pink tv-play">🏡 마을로 들어가기</button>' : ''}
+          <button class="btn tv-share">${L('🔗 청첩장 공유하기', '🔗 Share the invitation')}</button>
+          ${canPlay ? `<button class="btn pink tv-play">${L('🏡 마을로 들어가기', '🏡 Enter the village')}</button>` : ''}
         </div>
-        <p style="margin-top:18px">${UI.esc(W.groom.name)} ♥ ${UI.esc(W.bride.name)} · 작은 결혼 마을</p>
+        <p style="margin-top:18px">${UI.esc(W.groom.name)} ♥ ${UI.esc(W.bride.name)} · ${L('작은 결혼 마을', 'A little wedding village')}</p>
       </footer>
     </div>`;
 
@@ -88,7 +89,7 @@ export function openTextView({ canPlay = false, onPlay, onClose, onSent, section
   tv.querySelectorAll('.tv-back, .tv-play').forEach(b => b.onclick = () => { onPlay?.(); closeTextView(); });
   tv.querySelectorAll('.tv-share').forEach(b => b.onclick = UI.share);
 
-  // 읽고 있는 부분을 위쪽 차례에서 표시
+  // highlight the section being read in the chips at the top
   if ('IntersectionObserver' in window) {
     const chips = [...tv.querySelectorAll('[data-go]')];
     const io = new IntersectionObserver(es => es.forEach(e => {

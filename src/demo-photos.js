@@ -1,11 +1,11 @@
 /* =========================================================
-   🎨 데모 사진: 사진 폴더가 비어 있을 때 캔버스로 그리는 일러스트
-   - 실제 사람 사진 없이도 사진관·앨범이 꽉 차 보이도록
-   - 테마·번호마다 장면이 정해져 있어서 항상 같은 그림이 나옵니다
-   - 3D 라이브러리를 쓰지 않아서 '글로 보기'에서도 동작합니다
+   🎨 Demo photos: illustrations drawn on a canvas when the photo folders are empty
+   - So the museum and album look full without real photos of people
+   - Each theme and number has a fixed scene, so the same picture always comes out
+   - It does not use the 3D library, so it also works in the text view
    ========================================================= */
 
-/* 문자열 → 항상 같은 난수열 (장면이 매번 바뀌지 않도록) */
+/* String → always the same random sequence (so scenes do not change each time) */
 function prng(seed) {
   let h = 1779033703 ^ seed.length;
   for (let i = 0; i < seed.length; i++) { h = Math.imul(h ^ seed.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
@@ -15,16 +15,16 @@ function prng(seed) {
 
 const EMOJI_FONT = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Android Emoji", sans-serif';
 const SKIES = [
-  ['#9CD3F2', '#E6F5FF'],   // 0 맑은 낮
-  ['#FFB88C', '#FFE7C9'],   // 1 노을
-  ['#F7C4D0', '#FFF3F6'],   // 2 분홍빛
-  ['#2B2D5C', '#6D5C9E'],   // 3 밤
-  ['#C7E8F7', '#FFECD8'],   // 4 아침
+  ['#9CD3F2', '#E6F5FF'],   // 0 clear day
+  ['#FFB88C', '#FFE7C9'],   // 1 sunset
+  ['#F7C4D0', '#FFF3F6'],   // 2 pink
+  ['#2B2D5C', '#6D5C9E'],   // 3 night
+  ['#C7E8F7', '#FFECD8'],   // 4 morning
 ];
 const OUTFITS = ['#8FB8DE', '#F4B8C0', '#F7D58B', '#A8D08D', '#C9B3E6', '#F9C59E', '#E88A98', '#7FC8C2'];
 const HAIRS = ['#5A3A2A', '#3A2A24', '#7A5238', '#1E1A22', '#C98A5B'];
 
-/* 테마별 장면표 (config의 captions 순서와 맞춤) */
+/* Scenes per theme (matches the order of captions in config) */
 const SCENES = {
   wedding: [
     { kind: 'park', sky: 0, who: 'wedding', props: ['🌸', '💐'] },
@@ -102,7 +102,7 @@ function emoji(g, ch, x, y, size, alpha = 1) {
   g.fillText(ch, x, y); g.restore();
 }
 
-/* ---------- 배경 ---------- */
+/* ---------- Background ---------- */
 function background(g, W, H, kind, sky, R) {
   const [top, bot] = SKIES[sky] || SKIES[0];
   const night = sky === 3;
@@ -114,7 +114,7 @@ function background(g, W, H, kind, sky, R) {
     wall.addColorStop(0, kind === 'cafe' ? '#E7C6A4' : night ? '#4B3F57' : '#FFF4E8');
     wall.addColorStop(1, kind === 'cafe' ? '#C99B74' : night ? '#3A3046' : '#FBE3D2');
     g.fillStyle = wall; g.fillRect(0, 0, W, H);
-    // 창문
+    // window
     const wx = W * 0.56, wy = H * 0.12, ww = W * 0.32, wh = H * 0.32;
     g.fillStyle = '#FFFFFF'; rr(g, wx - 8, wy - 8, ww + 16, wh + 16, 10); g.fill();
     const skyG = g.createLinearGradient(0, wy, 0, wy + wh);
@@ -123,20 +123,20 @@ function background(g, W, H, kind, sky, R) {
     g.fillStyle = '#FFFFFF'; g.fillRect(wx + ww / 2 - 3, wy, 6, wh); g.fillRect(wx, wy + wh / 2 - 3, ww, 6);
     if (night) { for (let i = 0; i < 12; i++) circle(g, wx + R() * ww, wy + R() * wh * 0.7, 1.5 + R() * 1.5, '#FFF8C9'); }
     else circle(g, wx + ww * 0.72, wy + wh * 0.3, ww * 0.1, '#FFE28A');
-    // 커튼
+    // curtains
     g.fillStyle = kind === 'cafe' ? 'rgba(255,255,255,.35)' : 'rgba(244,184,192,.8)';
     rr(g, wx - 22, wy - 14, 26, wh + 28, 12); g.fill(); rr(g, wx + ww - 4, wy - 14, 26, wh + 28, 12); g.fill();
-    // 바닥 (마루)
+    // floor (wooden)
     const fy = H * 0.72;
     g.fillStyle = kind === 'cafe' ? '#8F6B4E' : '#E6C39A'; g.fillRect(0, fy, W, H - fy);
     g.fillStyle = 'rgba(120,80,50,.15)';
     for (let i = 0; i < 7; i++) g.fillRect(0, fy + i * ((H - fy) / 7), W, 2);
-    // 벽 장식
+    // wall decorations
     if (kind === 'cafe') {
       for (let i = 0; i < 9; i++) circle(g, W * 0.08 + i * W * 0.105, H * 0.07 + Math.sin(i * 1.3) * 10, 5, '#FFF1B8');
       g.fillStyle = 'rgba(255,255,255,.5)'; rr(g, W * 0.06, H * 0.22, W * 0.36, 8, 4); g.fill();
       emoji(g, '🪴', W * 0.12, H * 0.2, W * 0.08); emoji(g, '📚', W * 0.32, H * 0.2, W * 0.07);
-      // 테이블
+      // table
       g.fillStyle = '#B98A66'; g.beginPath(); g.ellipse(W * 0.5, H * 0.86, W * 0.3, H * 0.06, 0, 0, Math.PI * 2); g.fill();
     } else {
       g.fillStyle = 'rgba(255,255,255,.7)'; rr(g, W * 0.1, H * 0.16, W * 0.2, H * 0.17, 8); g.fill();
@@ -146,7 +146,7 @@ function background(g, W, H, kind, sky, R) {
     return { horizon: H * 0.74, indoor: true };
   }
 
-  // 하늘
+  // sky
   const skyG = g.createLinearGradient(0, 0, 0, horizon);
   skyG.addColorStop(0, top); skyG.addColorStop(1, bot);
   g.fillStyle = skyG; g.fillRect(0, 0, W, horizon + 2);
@@ -159,7 +159,7 @@ function background(g, W, H, kind, sky, R) {
     glow.addColorStop(0, 'rgba(255,245,200,.9)'); glow.addColorStop(1, 'rgba(255,245,200,0)');
     g.fillStyle = glow; g.fillRect(0, 0, W, horizon);
     circle(g, sx, sy, W * 0.06, sky === 1 ? '#FFD27A' : '#FFF0A8');
-    // 구름
+    // clouds
     for (let i = 0; i < 3; i++) {
       const cx = R() * W, cy = H * (0.08 + R() * 0.25), s = W * (0.05 + R() * 0.04);
       g.fillStyle = 'rgba(255,255,255,.85)';
@@ -196,7 +196,7 @@ function background(g, W, H, kind, sky, R) {
     g.fillStyle = 'rgba(255,255,255,.5)'; for (let x = 10; x < W; x += 60) g.fillRect(x, horizon + (H - horizon) * 0.5, 30, 4);
     return { horizon: H * 0.86 };
   }
-  // 잔디 언덕 / 눈밭
+  // grassy hills / snowfield
   const snow = kind === 'snow';
   const greens = snow ? ['#F4F7FB', '#EAF0F7', '#FFFFFF'] : night ? ['#3F6B4A', '#355C40', '#4A7A55'] : ['#9ED08A', '#86C174', '#B2DB9C'];
   g.fillStyle = greens[0]; g.fillRect(0, horizon, W, H - horizon);
@@ -204,7 +204,7 @@ function background(g, W, H, kind, sky, R) {
     g.fillStyle = greens[(i + 1) % 3];
     g.beginPath(); g.ellipse(W * (0.2 + i * 0.35) + R() * 40, horizon + 10 + i * 6, W * (0.45 + R() * 0.2), H * (0.08 + R() * 0.05), 0, Math.PI, Math.PI * 2); g.fill();
   }
-  // 나무
+  // trees
   for (let i = 0; i < 4; i++) {
     const tx = R() < 0.5 ? W * (0.04 + R() * 0.2) : W * (0.76 + R() * 0.2), ty = horizon + 4 + R() * 10, s = W * (0.05 + R() * 0.03);
     g.fillStyle = '#A47A5C'; g.fillRect(tx - s * 0.12, ty - s * 1.4, s * 0.24, s * 1.4);
@@ -216,23 +216,23 @@ function background(g, W, H, kind, sky, R) {
   return { horizon: H * 0.88 };
 }
 
-/* ---------- 동글동글한 캐릭터 (3D 마을 캐릭터와 같은 비율) ---------- */
+/* ---------- Round characters (same proportions as the 3D village characters) ---------- */
 function chibi(g, x, feet, u, o = {}) {
   const skin = '#FFE0C7', hair = o.hair || HAIRS[0], top = o.suit ? '#2F2B33' : o.dress ? '#FFFFFF' : o.outfit || OUTFITS[0];
   const headY = feet - 2.95 * u;
   g.lineCap = 'round';
-  // 그림자
+  // shadow
   g.fillStyle = 'rgba(0,0,0,.12)'; g.beginPath(); g.ellipse(x, feet + u * 0.1, u * 1.1, u * 0.22, 0, 0, Math.PI * 2); g.fill();
-  // 베일 · 긴 머리 (머리 뒤)
+  // veil · long hair (behind the head)
   if (o.veil) { g.fillStyle = 'rgba(255,255,255,.7)'; g.beginPath(); g.ellipse(x, headY + u * 0.9, u * 1.25, u * 1.9, 0, 0, Math.PI * 2); g.fill(); }
   if (o.long || o.dress) { g.fillStyle = hair; rr(g, x - u * 1.02, headY - u * 0.4, u * 2.04, u * 1.9, u * 0.5); g.fill(); }
-  // 다리
+  // legs
   if (!o.dress) {
     g.strokeStyle = o.suit ? '#2F2B33' : '#6B5B53'; g.lineWidth = u * 0.36;
     for (const s of [-1, 1]) { g.beginPath(); g.moveTo(x + s * u * 0.28, feet - u * 1.0); g.lineTo(x + s * u * 0.28, feet - u * 0.15); g.stroke(); }
     g.fillStyle = '#4A3B38'; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(x + s * u * 0.3, feet - u * 0.05, u * 0.26, u * 0.14, 0, 0, Math.PI * 2); g.fill(); }
   }
-  // 몸통 / 드레스
+  // body / dress
   if (o.dress) {
     g.fillStyle = '#FFFFFF'; g.beginPath(); g.moveTo(x - u * 0.5, feet - u * 1.5); g.lineTo(x + u * 0.5, feet - u * 1.5); g.quadraticCurveTo(x + u * 1.3, feet - u * 0.4, x + u * 1.25, feet); g.lineTo(x - u * 1.25, feet); g.quadraticCurveTo(x - u * 1.3, feet - u * 0.4, x - u * 0.5, feet - u * 1.5); g.fill();
     g.fillStyle = '#F4B8C0'; rr(g, x - u * 0.55, feet - u * 1.55, u * 1.1, u * 0.14, u * 0.07); g.fill();
@@ -243,22 +243,22 @@ function chibi(g, x, feet, u, o = {}) {
     g.fillStyle = '#1E1A22'; g.beginPath(); g.moveTo(x, feet - u * 1.92); g.lineTo(x - u * 0.18, feet - u * 2.02); g.lineTo(x - u * 0.18, feet - u * 1.82); g.fill(); g.beginPath(); g.moveTo(x, feet - u * 1.92); g.lineTo(x + u * 0.18, feet - u * 2.02); g.lineTo(x + u * 0.18, feet - u * 1.82); g.fill();
     circle(g, x - u * 0.42, feet - u * 1.85, u * 0.1, '#F4B8C0');
   }
-  // 팔
+  // arms
   g.strokeStyle = o.dress ? skin : top; g.lineWidth = u * 0.3;
   const arm = (s, up) => { g.beginPath(); g.moveTo(x + s * u * 0.6, feet - u * 1.85); if (up) g.lineTo(x + s * u * 1.0, feet - u * 2.7); else g.lineTo(x + s * u * 0.82, feet - u * 1.1); g.stroke(); circle(g, up ? x + s * u * 1.0 : x + s * u * 0.82, up ? feet - u * 2.72 : feet - u * 1.08, u * 0.17, skin); };
   arm(-1, o.waveL); arm(1, o.wave);
-  // 부케
+  // bouquet
   if (o.bouquet) {
     g.fillStyle = '#9CC08A'; rr(g, x - u * 0.08, feet - u * 1.25, u * 0.16, u * 0.4, u * 0.05); g.fill();
     ['#F4B8C0', '#FFFFFF', '#F7D58B', '#E88A98', '#FFE3EA', '#F4B8C0'].forEach((c, i) => circle(g, x + Math.cos(i * 1.05) * u * 0.22, feet - u * 1.35 + Math.sin(i * 1.05) * u * 0.18, u * 0.16, c));
     circle(g, x, feet - u * 1.33, u * 0.16, '#E88A98');
   }
-  // 머리
+  // head
   circle(g, x, headY, u, skin);
   g.fillStyle = hair; g.beginPath(); g.arc(x, headY - u * 0.05, u * 1.04, Math.PI * 1.02, Math.PI * 1.98); g.quadraticCurveTo(x + u * 0.5, headY - u * 0.05, x + u * 0.25, headY + u * 0.25); g.quadraticCurveTo(x - u * 0.2, headY - u * 0.2, x - u * 0.6, headY + u * 0.1); g.quadraticCurveTo(x - u * 1.0, headY - u * 0.05, x - u * 1.04, headY - u * 0.05); g.fill();
   if (o.crown) for (let i = 0; i < 5; i++) circle(g, x - u * 0.6 + i * u * 0.3, headY - u * 0.98 + Math.abs(i - 2) * u * 0.1, u * 0.09, i % 2 ? '#F4B8C0' : '#FFFFFF');
   if (o.hat) emoji(g, o.hat, x, headY - u * 1.0, u * 1.3);
-  // 눈 · 볼 · 입
+  // eyes · cheeks · mouth
   for (const s of [-1, 1]) {
     circle(g, x + s * u * 0.33, headY + u * 0.05, u * 0.12, '#2B2220');
     circle(g, x + s * u * 0.33 + u * 0.04, headY, u * 0.04, '#FFFFFF');
@@ -266,7 +266,7 @@ function chibi(g, x, feet, u, o = {}) {
   }
   if (o.glasses) { g.strokeStyle = '#4A3B38'; g.lineWidth = u * 0.06; for (const s of [-1, 1]) { g.beginPath(); g.arc(x + s * u * 0.33, headY + u * 0.05, u * 0.22, 0, Math.PI * 2); g.stroke(); } }
   g.strokeStyle = '#2B2220'; g.lineWidth = u * 0.07; g.beginPath(); g.arc(x, headY + u * 0.4, u * 0.16, 0.15, Math.PI - 0.15); g.stroke();
-  // 풍선
+  // balloon
   if (o.balloon) {
     g.strokeStyle = '#B8A59B'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x + u * 0.82, feet - u * 1.08); g.lineTo(x + u * 1.3, feet - u * 3.9); g.stroke();
     circle(g, x + u * 1.3, feet - u * 4.4, u * 0.55, o.balloon); circle(g, x + u * 1.15, feet - u * 4.55, u * 0.14, 'rgba(255,255,255,.6)');
@@ -305,7 +305,7 @@ function people(g, W, feet, who, R, n = 2) {
   }
 }
 
-/* ---------- 한 장 그리기 ---------- */
+/* ---------- Draw one picture ---------- */
 export function demoPhoto(theme, idx, longEdge = 840) {
   const id = theme.id || 'wedding';
   const list = SCENES[id];
@@ -318,20 +318,20 @@ export function demoPhoto(theme, idx, longEdge = 840) {
   const g = c.getContext('2d');
   const bg = background(g, W, H, scene.kind, scene.sky, R);
   const feet = bg.horizon;
-  // 큰 소품 (뒤)
+  // big prop (behind)
   const big = scene.props[0];
   if (big) emoji(g, big, W * (R() < 0.5 ? 0.15 : 0.85), feet - W * 0.36, W * 0.21, 0.95);
   people(g, W, feet - 6, scene.who, R, scene.n);
-  // 작은 소품 (앞)
+  // small props (in front)
   scene.props.slice(1).forEach((p, i) => emoji(g, p, W * (0.12 + i * 0.7 + R() * 0.1), feet - W * 0.06 + R() * 10, W * 0.12));
-  // 반짝이
+  // sparkles
   for (let i = 0; i < 10; i++) circle(g, R() * W, R() * H * 0.6, 1.2 + R() * 2, 'rgba(255,255,255,.75)');
   if (id === 'wedding' || id === 'dating') for (let i = 0; i < 5; i++) emoji(g, ['💗', '✨', '🌸'][i % 3], R() * W, R() * H * 0.5, W * 0.035, 0.8);
-  // 가장자리 어둡게 (사진 느낌)
+  // darker edges (photo feel)
   const vig = g.createRadialGradient(W / 2, H / 2, W * 0.35, W / 2, H / 2, W * 0.85);
   vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(60,30,20,.22)');
   g.fillStyle = vig; g.fillRect(0, 0, W, H);
-  // 어린 시절: 빛바랜 옛날 사진 느낌 + 흰 테두리
+  // childhood: faded old-photo look + white border
   if (id === 'childhood') {
     g.fillStyle = 'rgba(150,105,40,.2)'; g.fillRect(0, 0, W, H);
     g.strokeStyle = '#FFFDF8'; g.lineWidth = W * 0.035; g.strokeRect(0, 0, W, H);

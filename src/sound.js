@@ -1,21 +1,21 @@
 /* =========================================================
-   🎵 파일 없는 소리
-   mp3 없이 WebAudio로 오르골 배경음과 작은 효과음을 합성합니다.
-   - 기본은 꺼짐. 오른쪽 위 🔇 버튼(또는 메뉴)으로 켜면 기억해 둡니다
-   - 저작권 걱정 없이 단일 HTML 안에서 완결됩니다
+   🎵 Sound without files
+   Synthesises a music-box background tune and small sound effects with WebAudio, no mp3 needed.
+   - Off by default. Turning it on with the top-right 🔇 button (or the menu) is remembered
+   - No copyright worries, and it all fits inside a single HTML file
    ========================================================= */
 const KEY = 'wedding-sound';
 let ctx = null, master = null, bgm = null, noiseBuf = null;
 let enabled = false, timer = null, nextT = 0, step = 0;
 
-/* 오르골 멜로디 (C 펜타토닉, 한 칸 = 8분음표) */
+/* Music-box melody (C pentatonic, one step = an eighth note) */
 const C5 = 523.25, D5 = 587.33, E5 = 659.25, G5 = 783.99, A5 = 880, C6 = 1046.5, D6 = 1174.7;
 const MELODY = [
   E5, G5, A5, G5, E5, D5, C5, 0, D5, E5, G5, E5, D5, C5, 0, 0,
   E5, G5, A5, C6, A5, G5, E5, 0, D5, E5, D6, C6, A5, G5, 0, 0,
   C6, A5, G5, A5, G5, E5, D5, 0, E5, G5, E5, D5, C5, 0, 0, 0,
 ];
-const BASS = [130.81, 110, 87.31, 98]; // C3 A2 F2 G2 (4박마다)
+const BASS = [130.81, 110, 87.31, 98]; // C3 A2 F2 G2 (every 4 beats)
 const STEP = 0.3;
 
 function ensure() {
@@ -50,7 +50,7 @@ function noise(t, dur, { gain = 0.2, type = 'lowpass', freq = 2000 } = {}) {
   s.start(t); s.stop(t + dur + 0.02);
 }
 
-/* 배경음: 조금 앞서서 예약해 두는 방식 (탭이 뒤로 가면 멈춤) */
+/* Background tune: notes are scheduled a little ahead (stops when the tab goes to the background) */
 function schedule() {
   if (!ctx || !enabled) return;
   while (nextT < ctx.currentTime + 0.4) {
@@ -67,7 +67,7 @@ function schedule() {
 export const sound = {
   get enabled() { return enabled; },
   saved() { try { return localStorage.getItem(KEY) === '1'; } catch { return false; } },
-  /* 사용자가 눌렀을 때(제스처 안)만 켜져요 — 휴대폰 자동재생 규칙 */
+  /* Turns on only when the user taps (inside a gesture), because of phone autoplay rules */
   setEnabled(on) {
     if (on && !ensure()) return false;
     enabled = on;
@@ -97,7 +97,7 @@ export const sound = {
       case 'tada': [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, t + i * 0.09, 0.4, { gain: 0.12 })); break;
     }
   },
-  /* 팝업이 열리면 배경음을 살짝 줄임 */
+  /* Lower the background tune a little while a popup is open */
   duck(on) { if (bgm && ctx) bgm.gain.setTargetAtTime(on ? 0.04 : 0.12, ctx.currentTime, 0.12); },
 };
 

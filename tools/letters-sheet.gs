@@ -1,13 +1,14 @@
 /* =========================================================
-   💌 작은 결혼 마을 — 편지 모으기 (Google Apps Script)
+   💌 Little wedding village — collecting letters (Google Apps Script)
 
-   구글 시트에 붙여서 '웹 앱'으로 배포하면, 사이트의 편지함이 이 시트에 편지를 모읍니다.
-   설치 순서는 tools/편지_시트_연결.md 를 보세요. (10분, 무료)
+   Attach this to a Google Sheet and deploy it as a 'web app'; the site's mailbox then collects letters in the sheet.
+   For the setup steps see tools/편지_시트_연결.md. (10 minutes, free)
 
-   - GET  ?site=main&action=list           → 그 탭의 편지 목록 (JSON, 최신순 최대 300통)
-   - POST {id, name, side, message, time}  → 그 탭에 한 줄 추가 (같은 id는 한 번만 저장)
-   - 탭 하나 = 결혼식 하나 (lettersSite). 없으면 자동으로 만들어요.
-   - 시트에서 행을 지우면 사이트에서도 사라집니다.
+   - GET  ?site=main&action=list           → that tab's letters (JSON, newest first, up to 300)
+   - POST {id, name, side, message, time}  → adds one row to that tab (the same id is saved only once)
+   - One tab = one wedding (lettersSite). Created automatically if missing.
+   - Deleting a row in the sheet removes the letter from the site too.
+   - The header row below and the side values are stored data: keep them as they are.
    ========================================================= */
 var MAX_NAME = 20, MAX_MSG = 500, MAX_LIST = 300;
 var HEADER = ['시간', '이름', '측', '메시지', 'id'];
@@ -35,7 +36,7 @@ function json_(o) {
 }
 function toISO_(v) { return v instanceof Date ? v.toISOString() : String(v || ''); }
 
-/* 편지 목록 */
+/* Letter list */
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var sh = sheetFor_(p.site, false);
@@ -51,7 +52,7 @@ function doGet(e) {
   return json_({ ok: true, letters: letters, count: rows.length });
 }
 
-/* 편지 한 통 저장 */
+/* Save one letter */
 function doPost(e) {
   var b = {};
   try { b = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (err) { return json_({ ok: false, error: 'bad json' }); }

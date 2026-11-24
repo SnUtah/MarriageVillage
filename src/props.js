@@ -1,14 +1,16 @@
 import * as THREE from 'three';
+import { L, isKo } from './i18n.js';
 import { toon, mesh, textCanvas, canvasTex, labelSprite, formatKDate, rand, clamp } from './util.js';
 import { createCharacter } from './character.js';
 import { throwSprite } from './world.js';
 
 /* =========================================================
-   상호작용 오브젝트 & 건물
+   Interactive objects & buildings
    ========================================================= */
 export const MUSEUM_DOOR = { x: 20, z: -8.4, r: 1.7 };
-export const BED = { x: 8.2, z: 25.5, r: 1.8 };   // 💌 편지 꽃밭 (우체통 옆)
-const DEFAULT_COUPLE_LINES = ['와주셔서 정말 감사해요 💐', '식사 꼭 하고 가세요!', '분수에 동전 던져 보셨어요?', '사진관도 들러 주세요 🖼️', '편지 남겨 주시면 꼭 읽을게요 💌', '오늘 정말 행복해요 🥰'];
+export const BED = { x: 8.2, z: 25.5, r: 1.8 };   // 💌 letter garden (next to the mailbox)
+const DEFAULT_COUPLE_LINES = L(['와주셔서 정말 감사해요 💐', '식사 꼭 하고 가세요!', '분수에 동전 던져 보셨어요?', '사진관도 들러 주세요 🖼️', '편지 남겨 주시면 꼭 읽을게요 💌', '오늘 정말 행복해요 🥰'],
+  ['Thanks so much for coming 💐', 'Please stay for the meal!', 'Tried the wishing fountain?', 'Visit the photo gallery too 🖼️', "We'll read every letter 💌", "We're so happy today 🥰"]);
 
 export function buildProps(scene) {
   const W = window.WEDDING;
@@ -26,10 +28,10 @@ export function buildProps(scene) {
   }
   const facePlane = (canvas, w, h) => new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: canvasTex(canvas), transparent: true }));
 
-  const { date } = formatKDate();
-  const shortDate = W.date.slice(0, 10).replace(/-/g, '. ');
+  const { k } = formatKDate();
+  const shortDate = L(W.date.slice(0, 10).replace(/-/g, '. '), k.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
 
-  /* ---------- 💌 청첩장 (이젤) ---------- */
+  /* ---------- 💌 Invitation (easel) ---------- */
   {
     const g = new THREE.Group();
     const wood = '#B98A66';
@@ -55,10 +57,10 @@ export function buildProps(scene) {
     g.rotation.y = 0.35;
     group.add(g);
     colliders.push({ x: -4.8, z: 24, r: 1 });
-    addInteract('invitation', '청첩장', '💌', '청첩장 보기', -4.8, 24, 3, 3.8);
+    addInteract('invitation', L('청첩장', 'Invitation'), '💌', L('청첩장 보기', 'Open invitation'), -4.8, 24, 3, 3.8);
   }
 
-  /* ---------- ✉️ 편지함 (빨간 우체통) ---------- */
+  /* ---------- ✉️ Mailbox (red postbox) ---------- */
   {
     const g = new THREE.Group();
     const red = '#E4605A';
@@ -67,9 +69,9 @@ export function buildProps(scene) {
     const dome = mesh(new THREE.CylinderGeometry(0.4, 0.4, 1, 20, 1, false, 0, Math.PI), red, 0, 1.8, 0);
     dome.rotation.z = Math.PI / 2;
     const slot = mesh(new THREE.BoxGeometry(0.6, 0.06, 0.05), '#4A2B28', 0, 1.55, 0.41);
-    const sign = facePlane(textCanvas('편지함', { w: 256, h: 128, size: 58, bg: '#FFFDF8', radius: 24, color: '#C9637A' }), 0.7, 0.35);
+    const sign = facePlane(textCanvas(L('편지함', 'Mailbox'), { w: 256, h: 128, size: 58, bg: '#FFFDF8', radius: 24, color: '#C9637A' }), 0.7, 0.35);
     sign.position.set(0, 1.1, 0.41);
-    // 튀어나온 편지들
+    // letters popping out
     const letters = [];
     for (let i = 0; i < 3; i++) {
       const l = mesh(new THREE.BoxGeometry(0.4, 0.28, 0.02), i === 1 ? '#FFF3EA' : '#FFFFFF', 0, 2.4, 0);
@@ -87,10 +89,10 @@ export function buildProps(scene) {
       l.visible = k < 0.95;
     }));
     colliders.push({ x: 4.8, z: 23, r: 0.8 });
-    addInteract('mailbox', '편지함', '✉️', '축하 편지 쓰기', 4.8, 23, 2.8, 4.1);
+    addInteract('mailbox', L('편지함', 'Mailbox'), '✉️', L('축하 편지 쓰기', 'Write a letter'), 4.8, 23, 2.8, 4.1);
   }
 
-  /* ---------- 🌷 편지 꽃밭: 편지 한 통 = 꽃 한 송이 ---------- */
+  /* ---------- 🌷 Letter garden: one letter = one flower ---------- */
   const bed = new THREE.Group();
   group.add(bed);
   const flowers = [];
@@ -98,7 +100,7 @@ export function buildProps(scene) {
     bed.add(mesh(new THREE.CylinderGeometry(BED.r + 0.3, BED.r + 0.4, 0.18, 28), '#B98A66', BED.x, 0.09, BED.z));
     bed.add(mesh(new THREE.CylinderGeometry(BED.r + 0.05, BED.r + 0.05, 0.22, 28), '#7A5A44', BED.x, 0.1, BED.z));
     const post = mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.1, 6), '#A47A5C', BED.x, 0.55, BED.z + BED.r + 0.5);
-    const sign = facePlane(textCanvas('편지 꽃밭', { w: 360, h: 110, size: 50, bg: '#FFFDF8', radius: 26, color: '#C9637A' }), 1.3, 0.4);
+    const sign = facePlane(textCanvas(L('편지 꽃밭', 'Letter garden'), { w: 360, h: 110, size: 50, bg: '#FFFDF8', radius: 26, color: '#C9637A' }), 1.3, 0.4);
     sign.position.set(BED.x, 1.15, BED.z + BED.r + 0.55);
     const back = sign.clone(); back.rotation.y = Math.PI; back.position.z -= 0.02;
     bed.add(post, sign, back);
@@ -113,10 +115,10 @@ export function buildProps(scene) {
     const x = BED.x + Math.cos(a) * r, z = BED.z + Math.sin(a) * r;
     const g = new THREE.Group();
     g.add(mesh(stemGeo, '#8DC175', 0, 0.45, 0));
-    g.add(mesh(petalGeo, letter.side === '신부측' ? '#F4B8C0' : '#8FB8DE', 0, 0.75, 0));
+    g.add(mesh(petalGeo, letter.side === '신부측' ? '#F4B8C0' : '#8FB8DE', 0, 0.75, 0));   // side = stored value
     g.add(mesh(coreGeo, '#F7D58B', 0, 0.75, 0.13));
     if (flowers.length < 24) {
-      const name = String(letter.name || '').slice(0, 8);
+      const name = String(letter.name || '').slice(0, L(8, 12));   // English names need a few more letters
       const l = labelSprite(name, { scale: 1.5, bg: 'rgba(255,253,248,.85)' });
       l.position.y = 1.12;
       g.add(l);
@@ -133,11 +135,11 @@ export function buildProps(scene) {
     return new THREE.Vector3(x, 0, z);
   }
 
-  /* ---------- 🗺️ 오시는 길 (이정표) ---------- */
+  /* ---------- 🗺️ Directions (signpost) ---------- */
   {
     const g = new THREE.Group();
     g.add(mesh(new THREE.CylinderGeometry(0.1, 0.12, 3.2, 8), '#A47A5C', 0, 1.6, 0));
-    const signs = [['오시는 길', '#FFFDF8', 0.4], ['예식장 →', '#F4B8C0', -0.5], ['주차 안내', '#F7D58B', 0.9]];
+    const signs = [[L('오시는 길', 'Directions'), '#FFFDF8', 0.4], [L('예식장 →', 'Venue →'), '#F4B8C0', -0.5], [L('주차 안내', 'Parking'), '#F7D58B', 0.9]];
     signs.forEach(([t, bg, rot], i) => {
       const s = new THREE.Group();
       const board = mesh(new THREE.BoxGeometry(1.5, 0.42, 0.08), bg, 0.55, 0, 0);
@@ -154,10 +156,10 @@ export function buildProps(scene) {
     g.position.set(-3.6, 0, 13.5);
     group.add(g);
     colliders.push({ x: -3.6, z: 13.5, r: 0.4 });
-    addInteract('directions', '오시는 길', '🗺️', '오시는 길 보기', -3.6, 13.5, 2.6, 3.9);
+    addInteract('directions', L('오시는 길', 'Directions'), '🗺️', L('오시는 길 보기', 'See directions'), -3.6, 13.5, 2.6, 3.9);
   }
 
-  /* ---------- 🎁 마음 전하실 곳 (선물상자) ---------- */
+  /* ---------- 🎁 Gift accounts (gift boxes) ---------- */
   {
     const g = new THREE.Group();
     const gift = (s, col, rib, x, z, ry) => {
@@ -178,10 +180,10 @@ export function buildProps(scene) {
     g.position.set(-13.5, 0, 2);
     group.add(g);
     colliders.push({ x: -13.5, z: 2, r: 1.5 });
-    addInteract('gift', '마음 전하실 곳', '🎁', '계좌번호 보기', -13.5, 2, 3, 3.3);
+    addInteract('gift', L('마음 전하실 곳', 'Gift accounts'), '🎁', L('계좌번호 보기', 'See accounts'), -13.5, 2, 3, 3.3);
   }
 
-  /* ---------- 🕰️ 오늘의 식순 (칠판) ---------- */
+  /* ---------- 🕰️ Today's schedule (chalkboard) ---------- */
   {
     const g = new THREE.Group();
     const wood = '#B98A66';
@@ -192,12 +194,16 @@ export function buildProps(scene) {
     const x = c.getContext('2d');
     x.fillStyle = '#5E7D6A'; x.fillRect(0, 0, 480, 560);
     x.fillStyle = '#FFF8E7'; x.textAlign = 'center';
-    x.font = '700 50px "Gowun Batang"'; x.fillText('오늘의 식순', 240, 70);
+    x.font = '700 50px "Gowun Batang"'; x.fillText(L('오늘의 식순', "Today's schedule"), 240, 70);
     x.font = '30px "Gowun Dodum"';
     (W.schedule || []).slice(0, 6).forEach((s, i) => {
       x.textAlign = 'left';
       x.fillStyle = '#F7D58B'; x.fillText(s.time, 40, 150 + i * 70);
-      x.fillStyle = '#FFF8E7'; x.fillText(s.title, 150, 150 + i * 70);
+      x.fillStyle = '#FFF8E7';
+      // English only: a long title gets a smaller font so it stays on the board
+      if (!isKo) { const w = x.measureText(s.title).width; if (w > 310) x.font = `${Math.max(20, Math.floor(30 * 310 / w))}px "Gowun Dodum"`; }
+      x.fillText(s.title, 150, 150 + i * 70);
+      x.font = '30px "Gowun Dodum"';
     });
     const face = facePlane(c, 1.62, 1.9);
     face.position.set(0, 1.9, 0.06);
@@ -206,10 +212,10 @@ export function buildProps(scene) {
     g.rotation.y = -0.5;
     group.add(g);
     colliders.push({ x: 11, z: 9.8, r: 1 });
-    addInteract('schedule', '오늘의 식순', '🕰️', '식순 보기', 11, 9.8, 2.8, 3.6);
+    addInteract('schedule', L('오늘의 식순', "Today's schedule"), '🕰️', L('식순 보기', 'See schedule'), 11, 9.8, 2.8, 3.6);
   }
 
-  /* ---------- ❓ 퀴즈 부스 ---------- */
+  /* ---------- ❓ Quiz booth ---------- */
   {
     const g = new THREE.Group();
     g.add(mesh(new THREE.BoxGeometry(2.4, 1.1, 1), '#FFF3EA', 0, 0.55, 0));
@@ -228,10 +234,10 @@ export function buildProps(scene) {
     g.rotation.y = 0.6;
     group.add(g);
     colliders.push({ x: -19.5, z: -11.5, r: 1.5 });
-    addInteract('quiz', '신랑신부 퀴즈', '❓', '퀴즈 풀기', -19.5, -11.5, 3.2, 4.4);
+    addInteract('quiz', L('신랑신부 퀴즈', 'Couple quiz'), '❓', L('퀴즈 풀기', 'Take the quiz'), -19.5, -11.5, 3.2, 4.4);
   }
 
-  /* ---------- ⛲ 분수대 (동전이 쌓여요) ---------- */
+  /* ---------- ⛲ Fountain (coins pile up) ---------- */
   let fountain;
   {
     const g = new THREE.Group();
@@ -245,23 +251,23 @@ export function buildProps(scene) {
     const w2 = new THREE.Mesh(new THREE.CircleGeometry(1.05, 24), water.material);
     w2.rotation.x = -Math.PI / 2; w2.position.y = 2.17;
     g.add(w2);
-    // 하트 조형
+    // heart sculpture
     const hs = new THREE.Shape();
     hs.moveTo(0, -0.35); hs.bezierCurveTo(-0.6, 0.05, -0.35, 0.5, 0, 0.25); hs.bezierCurveTo(0.35, 0.5, 0.6, 0.05, 0, -0.35);
     const heart = mesh(new THREE.ExtrudeGeometry(hs, { depth: 0.15, bevelEnabled: true, bevelSize: 0.04, bevelThickness: 0.04, bevelSegments: 2 }), '#F4B8C0', 0, 2.75, -0.07);
     g.add(heart);
-    // 물줄기
+    // water jets
     const n = 90, pos = new Float32Array(n * 3), seeds = [];
     for (let i = 0; i < n; i++) seeds.push([Math.random() * Math.PI * 2, Math.random()]);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     const drops = new THREE.Points(geo, new THREE.PointsMaterial({ color: '#E8F7FF', size: 0.12, transparent: true, opacity: 0.9 }));
     g.add(drops);
-    // 물속 동전
+    // coins in the water
     const coins = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.09, 0.02, 12), toon('#E2B865'), 40);
     coins.count = 0;
     g.add(coins);
-    // 물결
+    // ripple
     const ripple = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.32, 28), new THREE.MeshBasicMaterial({ color: '#FFFFFF', transparent: true, opacity: 0, depthWrite: false }));
     ripple.rotation.x = -Math.PI / 2; ripple.position.y = 0.6;
     g.add(ripple);
@@ -281,9 +287,9 @@ export function buildProps(scene) {
       if (rippleT > 0) { rippleT -= dt / 0.7; const k = 1 - Math.max(0, rippleT); ripple.scale.setScalar(1 + k * 6); ripple.material.opacity = Math.max(0, rippleT); }
     });
     colliders.push({ x: 0, z: 4, r: 3.2 });
-    addInteract('fountain', '소원 분수', '🪙', '동전 던지기', 0, 4, 4.2, 4.3);
+    addInteract('fountain', L('소원 분수', 'Wishing fountain'), '🪙', L('동전 던지기', 'Toss a coin'), 0, 4, 4.2, 4.3);
     fountain = {
-      /* 플레이어 손에서 분수 가운데로 동전이 날아가요 */
+      /* a coin flies from the player's hand to the middle of the fountain */
       toss(scene, from, onLand) {
         throwSprite(scene, from, new THREE.Vector3(0, 2.25, 4), '🪙', 0.75, () => { rippleT = 1; onLand?.(); });
       },
@@ -302,14 +308,14 @@ export function buildProps(scene) {
     };
   }
 
-  /* ---------- 💒 버진로드, 의자, 웨딩 아치, 신랑신부 ---------- */
+  /* ---------- 💒 Aisle, chairs, wedding arch, the couple ---------- */
   {
     const g = new THREE.Group();
     const carpet = mesh(new THREE.BoxGeometry(1.6, 0.03, 14.5), '#FFFFFF', 0, 0.04, -11);
     const edgeL = mesh(new THREE.BoxGeometry(0.1, 0.035, 14.5), '#F4B8C0', -0.8, 0.045, -11);
     const edgeR = edgeL.clone(); edgeR.position.x = 0.8;
     g.add(carpet, edgeL, edgeR);
-    // 의자
+    // chairs
     const chair = (x, z, bow) => {
       const c = new THREE.Group();
       c.add(mesh(new THREE.BoxGeometry(0.62, 0.08, 0.6), '#FFFFFF', 0, 0.5, 0));
@@ -331,9 +337,9 @@ export function buildProps(scene) {
     }
     boxes.push({ minX: 1.3, maxX: 4.4, minZ: -13.3, maxZ: -6.3 }, { minX: -4.4, maxX: -1.3, minZ: -13.3, maxZ: -6.3 });
 
-    // 단상
+    // stage
     g.add(mesh(new THREE.CylinderGeometry(3.2, 3.3, 0.16, 36), '#FFFDF8', 0, 0.08, -19.5));
-    // 아치
+    // arch
     const archMat = toon('#FFFFFF');
     for (const s of [-1, 1]) g.add(mesh(new THREE.CylinderGeometry(0.14, 0.16, 3.2, 10), archMat, s * 2.2, 1.6, -19.5));
     const arc = mesh(new THREE.TorusGeometry(2.2, 0.14, 10, 40, Math.PI), archMat, 0, 3.2, -19.5);
@@ -358,7 +364,7 @@ export function buildProps(scene) {
       f.scale.setScalar(rand(0.9, 1.4));
       g.add(f);
     }
-    // 커튼
+    // curtains
     const drapeMat = new THREE.MeshToonMaterial({ color: '#FFE3EA', transparent: true, opacity: 0.75, side: THREE.DoubleSide });
     for (const s of [-1, 1]) {
       const d = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 3.6, 1, 8), drapeMat);
@@ -368,7 +374,7 @@ export function buildProps(scene) {
       d.rotation.z = s * 0.1;
       g.add(d);
     }
-    // 뒤쪽 꽃 울타리
+    // flower hedge at the back
     for (let i = 0; i < 9; i++) {
       const hx = -6 + i * 1.5;
       const h = mesh(new THREE.IcosahedronGeometry(0.9, 1), '#8CC47A', hx, 0.8, -22.3);
@@ -387,10 +393,10 @@ export function buildProps(scene) {
   groom.root.rotation.y = 0.15; bride.root.rotation.y = -0.15;
   group.add(groom.root, bride.root);
   colliders.push({ x: 0, z: -19.6, r: 1.4 });
-  const coupleIt = addInteract('couple', '신랑 · 신부', '💐', '인사 나누기', 0, -18.6, 3.4, 3.2);
+  const coupleIt = addInteract('couple', L('신랑 · 신부', 'The couple'), '💐', L('인사 나누기', 'Say hello'), 0, -18.6, 3.4, 3.2);
   coupleIt.npcs = [groom, bride];
 
-  /* 신랑신부가 다가오는 하객을 바라보고 말을 걸어요 */
+  /* The couple looks at guests who come near and talks to them */
   const coupleLines = Array.isArray(W.coupleLines) && W.coupleLines.length ? W.coupleLines : DEFAULT_COUPLE_LINES;
   const coupleBubbles = new Map();
   let sayT = 4, sayIdx = Math.floor(Math.random() * coupleLines.length), bub = null, bubT = 0;
@@ -411,7 +417,7 @@ export function buildProps(scene) {
     if (bub) { bubT -= dt; if (bubT <= 0) { bub.visible = false; bub = null; } }
   }
 
-  /* ---------- 📸 포토존 ---------- */
+  /* ---------- 📸 Photo zone ---------- */
   {
     const g = new THREE.Group();
     const gold = '#E2B865';
@@ -435,10 +441,10 @@ export function buildProps(scene) {
     group.add(g);
     const ang = 0.5;
     for (const s of [-1, 1]) colliders.push({ x: -11 + Math.cos(ang) * s * fw / 2, z: 19 - Math.sin(ang) * s * fw / 2, r: 0.3 });
-    addInteract('photozone', '포토존', '📸', '기념사진 찍기', -11, 19, 3, 4.6);
+    addInteract('photozone', L('포토존', 'Photo zone'), '📸', L('기념사진 찍기', 'Take a photo'), -11, 19, 3, 4.6);
   }
 
-  /* ---------- 축하 화환 ---------- */
+  /* ---------- Congratulation wreaths ---------- */
   const wreath = (x, z, text) => {
     const g = new THREE.Group();
     for (const s of [-0.4, 0.4]) {
@@ -452,7 +458,8 @@ export function buildProps(scene) {
       const a = (i / 28) * Math.PI * 2;
       g.add(mesh(fg, cols[i % 4], Math.cos(a) * 0.62, 2.3 + Math.sin(a) * 0.62, 0));
     }
-    const rib = facePlane(textCanvas(text.split(''), { w: 96, h: 420, size: 64, bg: '#FFFFFF', radius: 10, color: '#C9637A', font: 'Gowun Batang' }), 0.22, 0.95);
+    // vertical ribbon: one letter per line (English has more letters, so they are smaller)
+    const rib = facePlane(textCanvas(text.split(''), { w: 96, h: 420, size: L(64, 40), bg: '#FFFFFF', radius: 10, color: '#C9637A', font: 'Gowun Batang' }), 0.22, 0.95);
     rib.position.set(0.25, 1.65, 0.12);
     g.add(rib);
     g.position.set(x, 0, z);
@@ -460,13 +467,13 @@ export function buildProps(scene) {
     group.add(g);
     colliders.push({ x, z, r: 0.6 });
   };
-  wreath(-3.4, 32, '축결혼');
-  wreath(3.4, 32, '축결혼');
-  wreath(15.2, -9, '축결혼');
+  wreath(-3.4, 32, L('축결혼', 'CONGRATS'));
+  wreath(3.4, 32, L('축결혼', 'CONGRATS'));
+  wreath(15.2, -9, L('축결혼', 'CONGRATS'));
 
-  /* ---------- 🏛️ 뮤지엄 ---------- */
+  /* ---------- 🏛️ Museum ---------- */
   buildMuseumExterior(group, colliders, boxes, updaters);
-  addInteract('museum', W.museum?.title || '추억 사진관', '🖼️', '사진관 입장', MUSEUM_DOOR.x, MUSEUM_DOOR.z, 2.6, 8.4);
+  addInteract('museum', W.museum?.title || L('추억 사진관', 'Photo gallery'), '🖼️', L('사진관 입장', 'Enter the gallery'), MUSEUM_DOOR.x, MUSEUM_DOOR.z, 2.6, 8.4);
 
   function update(dt, t, playerPos) {
     updaters.forEach(u => u(t, dt));
@@ -480,14 +487,14 @@ export function buildProps(scene) {
 function buildMuseumExterior(group, colliders, boxes, updaters) {
   const W = window.WEDDING;
   const g = new THREE.Group();
-  const cx = 20, front = -10.2; // 정면 벽 z
+  const cx = 20, front = -10.2; // front wall z
   const cream = '#FFF6EA', white = '#FFFDF8', rose = '#E9B4A8';
-  // 기단
+  // base
   g.add(mesh(new THREE.BoxGeometry(15, 0.4, 13), '#F1E4CF', cx, 0.2, -15.5));
   for (let i = 0; i < 3; i++) g.add(mesh(new THREE.BoxGeometry(6 - i * 0.6, 0.13, 0.45), '#F1E4CF', cx, 0.065 + i * 0.13, -8.3 - i * 0.45));
-  // 본관
+  // main building
   g.add(mesh(new THREE.BoxGeometry(13, 5.8, 10), cream, cx, 3.3, -15.3));
-  // 기둥
+  // columns
   const colGeo = new THREE.CylinderGeometry(0.34, 0.38, 5.4, 16);
   const capGeo = new THREE.BoxGeometry(0.9, 0.25, 0.9);
   [14, 16.2, 18.3, 21.7, 23.8, 26].forEach(x => {
@@ -495,7 +502,7 @@ function buildMuseumExterior(group, colliders, boxes, updaters) {
     g.add(mesh(capGeo, white, x, 5.9, -9.4));
     g.add(mesh(capGeo, white, x, 0.52, -9.4));
   });
-  // 지붕
+  // roof
   g.add(mesh(new THREE.BoxGeometry(14.2, 0.6, 11.8), white, cx, 6.3, -14.9));
   const tri = new THREE.Shape();
   tri.moveTo(-7.4, 0); tri.lineTo(7.4, 0); tri.lineTo(0, 2.4); tri.closePath();
@@ -505,20 +512,20 @@ function buildMuseumExterior(group, colliders, boxes, updaters) {
     const s = new THREE.Shape(); s.moveTo(-6.6, 0.25); s.lineTo(6.6, 0.25); s.lineTo(0, 2.05); s.closePath(); return s;
   })(), { depth: 0.05, bevelEnabled: false }), white, cx, 6.6, -8.98);
   g.add(pedFront);
-  // 하트 장식
+  // heart ornament
   const hs = new THREE.Shape();
   hs.moveTo(0, -0.35); hs.bezierCurveTo(-0.6, 0.05, -0.35, 0.5, 0, 0.25); hs.bezierCurveTo(0.35, 0.5, 0.6, 0.05, 0, -0.35);
   const heart = mesh(new THREE.ExtrudeGeometry(hs, { depth: 0.1, bevelEnabled: false }), '#E88A98', cx, 7.5, -8.9);
   heart.scale.setScalar(0.9);
   g.add(heart);
-  // 간판
+  // sign
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.9), new THREE.MeshBasicMaterial({
-    map: canvasTex(textCanvas(W.museum?.title || '추억 사진관', { w: 1024, h: 150, size: 80, bg: '#FFFDF8', border: '#E2B865', radius: 75, color: '#C9637A' })),
+    map: canvasTex(textCanvas(W.museum?.title || L('추억 사진관', 'Photo gallery'), { w: 1024, h: 150, size: 80, bg: '#FFFDF8', border: '#E2B865', radius: 75, color: '#C9637A' })),
     transparent: true,
   }));
   sign.position.set(cx, 5.3, front + 0.02);
   g.add(sign);
-  // 문
+  // door
   g.add(mesh(new THREE.BoxGeometry(2.9, 3.7, 0.2), '#E2B865', cx, 2.25, front));
   const door = mesh(new THREE.BoxGeometry(2.5, 3.4, 0.22), '#9C6B4E', cx, 2.1, front + 0.02);
   g.add(door);
@@ -527,16 +534,18 @@ function buildMuseumExterior(group, colliders, boxes, updaters) {
   g.add(glow);
   const knob = mesh(new THREE.SphereGeometry(0.08, 8, 6), '#E2B865', cx + 0.9, 1.9, front + 0.15);
   g.add(knob);
-  // 창문 & 테마 배너
+  // windows & theme banners
   const themes = W.museum?.themes || [];
   [15.2, 17.2, 22.8, 24.8].forEach((x, i) => {
     const th = themes[i % Math.max(1, themes.length)];
-    const c = textCanvas(th ? [th.emoji] : ['♥'], { w: 128, h: 320, size: 70, bg: th?.color || '#F4B8C0', radius: 16, color: '#fff', sub: th?.title?.slice(0, 4), subSize: 22 });
+    // banner caption: first 4 characters (Korean) / longest word (English)
+    const sub = isKo ? th?.title?.slice(0, 4) : th?.title?.split(' ').reduce((a, w) => (w.length > a.length ? w : a), '');
+    const c = textCanvas(th ? [th.emoji] : ['♥'], { w: 128, h: 320, size: 70, bg: th?.color || '#F4B8C0', radius: 16, color: '#fff', sub, subSize: 22 });
     const banner = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 2), new THREE.MeshBasicMaterial({ map: canvasTex(c), transparent: true }));
     banner.position.set(x, 3.2, front + 0.03);
     g.add(banner);
   });
-  // 화분
+  // flower pots
   const pot = (x, z) => {
     g.add(mesh(new THREE.CylinderGeometry(0.35, 0.28, 0.6, 12), '#E9B4A8', x, 0.3, z));
     const b = mesh(new THREE.IcosahedronGeometry(0.5, 1), '#8CC47A', x, 0.95, z);
@@ -545,7 +554,7 @@ function buildMuseumExterior(group, colliders, boxes, updaters) {
     colliders.push({ x, z, r: 0.5 });
   };
   pot(16.5, -7.8); pot(23.5, -7.8);
-  // 다른 면 창문
+  // windows on the other sides
   for (const sx of [13.45, 26.55]) {
     for (const z of [-12.5, -15.5, -18.5]) {
       const w = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.2), new THREE.MeshBasicMaterial({ color: '#CDE9F5' }));

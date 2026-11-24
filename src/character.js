@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { toon, mesh } from './util.js';
 
-/* 동글동글한 2등신 캐릭터
+/* Round, two-heads-tall character
    type: 'guest' | 'groom' | 'bride' */
 export function createCharacter({ type = 'guest', outfit = '#8FB8DE', hair = '#5A3A2A', skin = '#FFE0C7', longHair = false } = {}) {
   const root = new THREE.Group();
@@ -12,7 +12,7 @@ export function createCharacter({ type = 'guest', outfit = '#8FB8DE', hair = '#5
   const top = isGroom ? '#2F2B33' : isBride ? '#FFFFFF' : outfit;
   const pants = isGroom ? '#2F2B33' : isBride ? '#FFFFFF' : '#6B5B53';
 
-  /* 다리 */
+  /* legs */
   const legGeo = new THREE.CapsuleGeometry(0.1, 0.28, 4, 8);
   const shoeGeo = new THREE.SphereGeometry(0.13, 12, 8);
   const legs = [];
@@ -27,7 +27,7 @@ export function createCharacter({ type = 'guest', outfit = '#8FB8DE', hair = '#5
     legs.push(pivot);
   }
 
-  /* 몸통 */
+  /* body */
   const torso = mesh(new THREE.CapsuleGeometry(0.3, 0.3, 6, 14), top, 0, 0.86, 0);
   torso.scale.set(1, 1, 0.85);
   body.add(torso);
@@ -57,7 +57,7 @@ export function createCharacter({ type = 'guest', outfit = '#8FB8DE', hair = '#5
     legs.forEach(l => (l.visible = false));
   }
 
-  /* 팔 */
+  /* arms */
   const armGeo = new THREE.CapsuleGeometry(0.075, 0.3, 4, 8);
   const handGeo = new THREE.SphereGeometry(0.085, 10, 8);
   const arms = [];
@@ -73,7 +73,7 @@ export function createCharacter({ type = 'guest', outfit = '#8FB8DE', hair = '#5
   }
 
   if (isBride) {
-    // 부케는 두 손 앞에
+    // bouquet held in front with both hands
     const bouquet = new THREE.Group();
     const cols = ['#F4B8C0', '#FFFFFF', '#F7D58B', '#E88A98', '#FFE3EA'];
     for (let i = 0; i < 7; i++) {
@@ -88,7 +88,7 @@ export function createCharacter({ type = 'guest', outfit = '#8FB8DE', hair = '#5
     arms[1].rotation.set(-0.9, 0, -0.5);
   }
 
-  /* 머리 */
+  /* head */
   const head = new THREE.Group();
   head.position.y = 1.5;
   body.add(head);
@@ -132,7 +132,7 @@ export function createCharacter({ type = 'guest', outfit = '#8FB8DE', hair = '#5
     head.add(crown);
   }
 
-  // 눈, 볼
+  // eyes, cheeks
   const eyeGeo = new THREE.SphereGeometry(0.05, 10, 8);
   const eyeMat = new THREE.MeshBasicMaterial({ color: '#2B2220' });
   const eyes = [];
@@ -157,7 +157,7 @@ export function createCharacter({ type = 'guest', outfit = '#8FB8DE', hair = '#5
 
   root.traverse(o => { if (o.isMesh && o.material !== eyeMat) o.castShadow = true; });
 
-  /* ---------- 애니메이션 ---------- */
+  /* ---------- Animation ---------- */
   let phase = 0, blinkT = 2 + Math.random() * 3, waveT = 0, idleT = 0;
   const armBase = arms[1].rotation.clone();
   const st = { root, body, head, arms, legs, type };
@@ -175,20 +175,20 @@ export function createCharacter({ type = 'guest', outfit = '#8FB8DE', hair = '#5
     body.position.y = Math.abs(Math.sin(phase)) * 0.07 * s + Math.sin(time * 2) * 0.012;
     body.rotation.z = Math.sin(phase) * 0.04 * s;
     head.rotation.z = Math.sin(time * 1.3) * 0.04;
-    // 가만히 서 있으면 잠시 뒤 두리번거리기 (하객 캐릭터만 — 신랑신부는 하객을 바라봄)
+    // after standing still for a while, look around (guest only; the couple looks at the guest)
     if (type === 'guest') {
       idleT = s < 0.05 ? idleT + dt : 0;
       const look = idleT > 4 ? Math.sin(time * 0.8) * 0.45 : 0;
       head.rotation.y += (look - head.rotation.y) * Math.min(1, dt * 4);
     }
 
-    // 깜빡임
+    // blinking
     blinkT -= dt;
     const blink = blinkT < 0.12 ? 0.15 : 1;
     eyes.forEach(e => (e.scale.y = 1.3 * blink));
     if (blinkT < 0) blinkT = 2 + Math.random() * 3;
 
-    // 손 흔들기
+    // waving
     if (waveT > 0) {
       waveT -= dt;
       const arm = arms[1];

@@ -1,18 +1,20 @@
+import { L } from './i18n.js';
 import { demoPhoto } from './demo-photos.js';
 
 /* =========================================================
-   3D와 상관없는 공용 도구 (날짜, 사진 목록, 편지 보관, 진동)
-   3D가 안 되는 휴대폰에서도 청첩장·앨범·편지가 동작하도록 따로 둡니다.
+   Shared tools that do not need 3D (dates, photo lists, letter storage, vibration)
+   Kept separate so the invitation, album and letters work even on phones without 3D.
    ========================================================= */
-const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const DAYS = L(['일', '월', '화', '수', '목', '금', '토'], ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']);
+const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export function weddingDate() { return new Date(window.WEDDING.date); }
 const toKST = d => { try { return new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Seoul' })); } catch { return new Date(d.getTime() + (d.getTimezoneOffset() + 540) * 60000); } };
 
-/* ---------- 시계 ----------
-   주소 끝에 #demo 를 붙이면 '예식 당일, 식 35분 전'부터 시계가 흐르고,
-   #now=2027-05-15T12:55 처럼 시각을 정할 수도 있어요.
-   (심사·테스트용: 당일 모드, 진행 중인 식순, 카운트다운을 미리 볼 수 있습니다) */
+/* ---------- Clock ----------
+   Add #demo to the end of the address and the clock starts on the wedding day, 35 minutes before the ceremony.
+   You can also set the time, like #now=2027-05-15T12:55.
+   (For judging and testing: preview the wedding-day mode, the current schedule step and the countdown) */
 let clockBase = null, clockT0 = 0;
 function readClockHash() {
   clockBase = null;
@@ -30,13 +32,13 @@ addEventListener('hashchange', readClockHash);
 export function now() { return clockBase ? new Date(clockBase + (Date.now() - clockT0)) : new Date(); }
 export const isDemoClock = () => !!clockBase;
 
-/* 예식 전 · 당일 · 후 */
+/* Before · on · after the wedding day */
 export function phase() {
   const k = toKST(weddingDate()), n = toKST(now());
   const diff = Math.round((new Date(k.getFullYear(), k.getMonth(), k.getDate()) - new Date(n.getFullYear(), n.getMonth(), n.getDate())) / 864e5);
   return diff > 0 ? 'before' : diff === 0 ? 'today' : 'after';
 }
-/* 당일 지금 진행 중인 순서 (각 순서는 다음 순서 시작까지, 마지막은 90분) */
+/* The step happening now on the day (each step lasts until the next one starts; the last one lasts 90 minutes) */
 export function currentStep() {
   const items = window.WEDDING.schedule || [];
   const k = toKST(weddingDate()), n = toKST(now());
@@ -54,11 +56,11 @@ export function currentStep() {
 export function formatKDate(d = weddingDate()) {
   const k = toKST(d);
   const h = k.getHours(), m = k.getMinutes();
-  const ap = h < 12 ? '오전' : '오후';
   const hh = h % 12 === 0 ? 12 : h % 12;
   return {
-    date: `${k.getFullYear()}년 ${k.getMonth() + 1}월 ${k.getDate()}일 ${DAYS[k.getDay()]}요일`,
-    time: `${ap} ${hh}시${m ? ' ' + m + '분' : ''}`,
+    date: L(`${k.getFullYear()}년 ${k.getMonth() + 1}월 ${k.getDate()}일 ${DAYS[k.getDay()]}요일`,
+      `${DAYS[k.getDay()]}, ${MONTHS_EN[k.getMonth()]} ${k.getDate()}, ${k.getFullYear()}`),
+    time: L(`${h < 12 ? '오전' : '오후'} ${hh}시${m ? ' ' + m + '분' : ''}`, `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`),
     k,
   };
 }
@@ -70,32 +72,32 @@ export function dday() {
   const b = new Date(n.getFullYear(), n.getMonth(), n.getDate());
   const diff = Math.round((a - b) / 86400000);
   if (diff > 0) return `D-${diff}`;
-  if (diff === 0) return 'D-DAY';
+  if (diff === 0) return L('D-DAY', 'D-Day');
   return `D+${-diff}`;
 }
 
-/* 편지에 찍히는 날짜: 오늘이면 '오늘', 아니면 '5월 3일' */
+/* Date shown on a letter: 'Today' if it is today, otherwise 'May 3' */
 export function shortDate(iso) {
   const d = toKST(new Date(iso));
   if (isNaN(d)) return '';
   const n = toKST(now());
-  if (d.toDateString() === n.toDateString()) return '오늘';
-  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+  if (d.toDateString() === n.toDateString()) return L('오늘', 'Today');
+  return L(`${d.getMonth() + 1}월 ${d.getDate()}일`, `${MONTHS_EN[d.getMonth()]} ${d.getDate()}`);
 }
 
-/* 짧은 진동 (안드로이드에서만 동작, 아이폰은 조용히 무시) */
+/* Short vibration (Android only; iPhones quietly ignore it) */
 export function buzz(ms = 10) {
   try { navigator.vibrate?.(ms); } catch {}
 }
 
-/* ---------- ✉️ 편지 보관 ----------
-   기본: 하객이 쓴 편지는 그 휴대폰(브라우저)에 저장되고 config.js의 letters(샘플)와 합쳐서 보여줍니다.
-   config.js에 lettersSheet(구글 시트에 붙인 Apps Script 웹 앱 주소)를 넣으면
-   편지가 시트로 보내지고, 시트에 모인 편지를 모든 하객이 봅니다. (tools/편지_시트_연결.md)
-   - 보내기에 실패하면 휴대폰에 보관(pending)해 두었다가 다음에 자동으로 다시 보냅니다
-   - 시트에서 받아 온 목록은 휴대폰에도 복사해 두어, 연결이 느려도 바로 보입니다 */
-const LS_KEY = 'wedding-letters-v2';        // 내가 쓴 편지
-const LS_REMOTE = 'wedding-letters-remote'; // 시트에서 받아 온 편지 (마지막 사본)
+/* ---------- ✉️ Letter storage ----------
+   Default: letters a guest writes are saved on that phone (browser) and shown together with letters (samples) from config.js.
+   If you put lettersSheet (the Apps Script web app address attached to a Google Sheet) in config.js,
+   letters are sent to the sheet and every guest sees the letters collected there. (tools/편지_시트_연결.md)
+   - If sending fails, the letter is kept on the phone (pending) and sent again automatically later
+   - The list loaded from the sheet is also copied to the phone, so it shows right away even on a slow connection */
+const LS_KEY = 'wedding-letters-v2';        // letters I wrote
+const LS_REMOTE = 'wedding-letters-remote'; // letters loaded from the sheet (last copy)
 const W_ = () => window.WEDDING || {};
 export const lettersRemote = () => !!W_().lettersSheet;
 const siteId = () => String(W_().lettersSite || 'main');
@@ -105,7 +107,7 @@ const uuid = () => (crypto.randomUUID ? crypto.randomUUID()
   : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
 
 function savedLetters() { return lsGet(LS_KEY); }
-let seedCache = null; // 예시 편지는 한 번만 만들어 시간·id를 고정 (꽃밭이 같은 편지를 두 번 심지 않도록)
+let seedCache = null; // sample letters are built once so their time and id stay fixed (so the garden never plants the same letter twice)
 function seedLetters() {
   if (seedCache) return seedCache;
   const now = Date.now();
@@ -121,8 +123,8 @@ const remote = { list: lettersRemote() ? lsGet(LS_REMOTE) : [], at: 0, loading: 
 export const lettersStatus = () => ({ remote: lettersRemote(), loading: !!remote.loading, error: remote.error, loaded: remote.ok, at: remote.at });
 const notify = () => { try { dispatchEvent(new CustomEvent('wedding:letters')); } catch {} };
 
-/* 시트(Apps Script 웹 앱) 호출. GET은 목록, POST는 편지 한 통.
-   본문을 text/plain으로 보내야 브라우저가 사전 요청(preflight) 없이 바로 보냅니다. */
+/* Call the sheet (Apps Script web app). GET = list, POST = one letter.
+   The body is sent as text/plain so the browser sends it right away without a preflight request. */
 async function call(method, params, body) {
   const u = new URL(W_().lettersSheet);
   u.searchParams.set('site', siteId());
@@ -140,7 +142,7 @@ async function call(method, params, body) {
   } finally { clearTimeout(timer); }
 }
 
-/* 보내지 못한 편지 다시 보내기 */
+/* Send again the letters that could not be sent */
 async function sendPending() {
   const mine = savedLetters();
   if (!mine.some(l => l.pending)) return;
@@ -152,7 +154,7 @@ async function sendPending() {
   lsSet(LS_KEY, mine);
 }
 
-/* 시트에서 편지 목록 받아 오기. 짧은 시간 안에 여러 번 불러도 한 번만 요청합니다. */
+/* Load the letter list from the sheet. Several calls in a short time make only one request. */
 export function fetchLetters({ force = false } = {}) {
   if (!lettersRemote()) return Promise.resolve(allLetters());
   if (remote.loading) return remote.loading;
@@ -166,7 +168,7 @@ export function fetchLetters({ force = false } = {}) {
       }));
       remote.at = Date.now(); remote.ok = true; remote.error = null;
       lsSet(LS_REMOTE, remote.list.slice(0, 300));
-      // 시트에 들어간 내 편지는 '보내는 중' 표시를 지움
+      // my letters that reached the sheet lose their 'sending' mark
       const ids = new Set(remote.list.map(l => l.id));
       const mine = savedLetters(); let changed = false;
       mine.forEach(l => { if (l.pending && ids.has(l.id)) { delete l.pending; changed = true; } });
@@ -188,19 +190,19 @@ export function allLetters() {
   const mineIds = new Set(mine.map(l => l.id).filter(Boolean));
   const sheetIds = new Set(remote.list.map(l => l.id));
   const fromSheet = remote.list.map(l => (mineIds.has(l.id) ? { ...l, mine: true } : l));
-  const notYet = mine.filter(l => !sheetIds.has(l.id)); // 아직 시트에 안 들어갔거나 보내는 중인 내 편지
+  const notYet = mine.filter(l => !sheetIds.has(l.id)); // my letters not in the sheet yet, or still sending
   return [...notYet, ...fromSheet, ...seedLetters()];
 }
 
-/* 편지 저장. 시트가 연결돼 있으면 보내고, 실패하면 휴대폰에 보관(pending)했다가 나중에 다시 보냅니다.
-   돌려주는 값: { ok, letter, sent } */
+/* Save a letter. If a sheet is connected it is sent; if that fails it is kept on the phone (pending) and sent later.
+   Returns: { ok, letter, sent } */
 export async function saveLetter(letter) {
   const l = { id: uuid(), name: letter.name, side: letter.side || '', message: letter.message, time: letter.time || new Date().toISOString() };
   const list = savedLetters();
   list.unshift(lettersRemote() ? { ...l, pending: true } : l);
   lsSet(LS_KEY, list.slice(0, 100));
   if (!lettersRemote()) return { ok: true, letter: l, sent: false };
-  // (보낸 쪽 화면이 직접 다시 그리고 꽃도 심으므로 여기서는 알림 이벤트를 보내지 않아요)
+  // (the sending screen redraws itself and plants the flower, so no update event is sent here)
   try {
     await call('POST', {}, l);
     const cur = savedLetters(); const m = cur.find(x => x.id === l.id); if (m) { delete m.pending; lsSet(LS_KEY, cur); }
@@ -212,8 +214,8 @@ export async function saveLetter(letter) {
 }
 export function letterCount() { return allLetters().length; }
 
-/* config → 테마별 사진 목록
-   demoPhotos가 켜져 있으면 src가 'demo:테마:번호'가 되고, photoURL()이 그림으로 바꿔줍니다. */
+/* config → photo list per theme
+   If demoPhotos is on, src becomes 'demo:theme:number' and photoURL() turns it into a drawing. */
 export function photoThemes() {
   const W = window.WEDDING;
   const themes = W.museum?.themes || [];
@@ -234,7 +236,7 @@ export function photoThemes() {
   });
 }
 
-/* 사진 주소 (데모 사진이면 그 자리에서 그려서 데이터 주소로) */
+/* Photo address (a demo photo is drawn on the spot and returned as a data address) */
 const demoCache = new Map();
 export const isDemo = p => typeof p?.src === 'string' && p.src.startsWith('demo:');
 export function photoURL(p, size = 'full') {
@@ -247,8 +249,8 @@ export function photoURL(p, size = 'full') {
   return demoCache.get(key);
 }
 
-/* 사진이 아직 없을 때 보여줄 안내 이미지 */
-export function placeholderCanvas(theme, idx, src, w = 600, h = 600, msg = '사진을 넣어주세요') {
+/* Placeholder image shown while a photo is missing */
+export function placeholderCanvas(theme, idx, src, w = 600, h = 600, msg = L('사진을 넣어주세요', 'Add a photo here')) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   const g = c.getContext('2d');

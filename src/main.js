@@ -1,3 +1,4 @@
+import { L, isKo, setLang } from './i18n.js';
 import * as UI from './ui.js';
 import * as Game from './game.js';
 import { openTextView } from './textview.js';
@@ -5,22 +6,23 @@ import { formatKDate, dday, photoThemes, buzz, phase, currentStep, isDemoClock, 
 import { sound } from './sound.js';
 
 /* =========================================================
-   시작 화면 & 3D 마을 불러오기
-   3D를 쓸 수 없는 휴대폰에서는 자동으로 "📖 글로 보기"로 동작합니다.
+   Start screen & loading the 3D village
+   On phones that cannot run 3D, it works as "📖 Text view" automatically.
    ========================================================= */
 const W = window.WEDDING;
 const $ = s => document.querySelector(s);
-const LOAD_MSG = [[10, '마을을 짓는 중… 🏡'], [35, '꽃을 심는 중… 🌷'], [65, '의자를 놓는 중… 🪑'], [85, '사진을 거는 중… 🖼️']];
+const LOAD_MSG = L([[10, '마을을 짓는 중… 🏡'], [35, '꽃을 심는 중… 🌷'], [65, '의자를 놓는 중… 🪑'], [85, '사진을 거는 중… 🖼️']],
+  [[10, 'Building the village… 🏡'], [35, 'Planting flowers… 🌷'], [65, 'Setting out chairs… 🪑'], [85, 'Hanging photos… 🖼️']]);
 const setLoad = p => {
   $('#loadbar').style.width = p + '%';
   const btn = $('#btn-enter');
   if (btn.disabled) { const m = LOAD_MSG.filter(([k]) => p >= k).pop(); if (m) btn.textContent = m[1]; }
 };
 
-/* ---------- 휴대폰 화면 다듬기 ---------- */
-// 아이폰 사파리의 두 손가락 화면 확대 막기 (걷기 조작과 겹치지 않도록)
+/* ---------- Phone screen tweaks ---------- */
+// Block two-finger zoom in iPhone Safari (so it does not clash with walking)
 ['gesturestart', 'gesturechange'].forEach(t => document.addEventListener(t, e => e.preventDefault()));
-// 키보드가 올라와도 편지 쓰는 창이 가려지지 않도록
+// Keep the letter form visible when the keyboard comes up
 if (window.visualViewport) {
   const vv = window.visualViewport;
   const upd = () => document.documentElement.style.setProperty('--kb', `${Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop))}px`);
@@ -28,29 +30,32 @@ if (window.visualViewport) {
   vv.addEventListener('scroll', upd);
 }
 
-/* ---------- 시작 화면 ---------- */
+/* ---------- Start screen ---------- */
 const { date, time } = formatKDate();
 const names = `${W.groom.name} ♥ ${W.bride.name}`;
 $('#i-groom').textContent = W.groom.name;
 $('#i-bride').textContent = W.bride.name;
-$('#i-date').innerHTML = `${date} ${time}<br>${W.venue.name} ${W.venue.hall}`;
+$('#i-date').innerHTML = L(`${date} ${time}<br>${W.venue.name} ${W.venue.hall}`, `${date} · ${time}<br>${W.venue.name}, ${W.venue.hall}`);
 $('#i-dday').textContent = dday();
 $('#h-names').textContent = names;
 $('#h-dday').textContent = dday();
-document.title = `${names} 결혼합니다`;
+document.title = L(`${names} 결혼합니다`, `${names} are getting married`);
 
-/* 예식 당일에는 첫 화면에서 바로 오시는 길·계좌로 */
+/* Language switch: top right of the start screen (and one item in the ☰ menu) */
+$('#btn-lang')?.addEventListener('click', () => setLang(isKo ? 'en' : 'ko'));
+
+/* On the wedding day, the start screen links straight to directions and accounts */
 const ph = phase();
 if (ph === 'today') {
-  $('#i-dday').textContent = '오늘이에요 🎉';
-  $('#h-dday').textContent = '오늘 🎉';
+  $('#i-dday').textContent = L('오늘이에요 🎉', "It's today 🎉");
+  $('#h-dday').textContent = L('오늘 🎉', 'Today 🎉');
   const box = $('#today');
   box.hidden = false;
   const paint = () => {
     const cs = currentStep();
-    box.querySelector('.t-now').textContent = cs.done ? '🙏 오늘 예식이 모두 끝났어요. 감사합니다'
-      : cs.item ? `🕰️ 지금: ${cs.item.time} ${cs.item.title}`
-      : `🕰️ 곧 시작해요 · 첫 순서 ${W.schedule?.[0]?.time || ''} ${W.schedule?.[0]?.title || ''}`;
+    box.querySelector('.t-now').textContent = cs.done ? L('🙏 오늘 예식이 모두 끝났어요. 감사합니다', "🙏 Today's ceremony is over. Thank you")
+      : cs.item ? L(`🕰️ 지금: ${cs.item.time} ${cs.item.title}`, `🕰️ Now: ${cs.item.time} ${cs.item.title}`)
+      : L(`🕰️ 곧 시작해요 · 첫 순서 ${W.schedule?.[0]?.time || ''} ${W.schedule?.[0]?.title || ''}`, `🕰️ Starting soon · First: ${W.schedule?.[0]?.time || ''} ${W.schedule?.[0]?.title || ''}`);
   };
   paint(); setInterval(paint, 60000);
   box.querySelector('.t-dir').onclick = UI.showDirections;
@@ -60,12 +65,12 @@ if (ph === 'today') {
 }
 if (isDemoClock()) $('#demo-badge').hidden = false;
 
-/* 편지가 구글 시트에 모이는 설정이면 들어오자마자 받아 두기 (편지함·꽃밭이 바로 채워지도록) */
+/* If letters are collected in a Google Sheet, load them right away (so the mailbox and garden fill up at once) */
 fetchLetters();
 
-/* ---------- 🎲 내 캐릭터 ----------
-   처음 들어오면 옷 색·머리가 무작위로 정해지고, 다음에 다시 와도 같은 모습으로 걸어요.
-   '다시 뽑기'를 누르면 새로 뽑습니다. */
+/* ---------- 🎲 My character ----------
+   On the first visit the outfit colour and hair are picked at random, and the next visit keeps the same look.
+   'Pick again' picks a new one. */
 let game = null;
 const OUTFITS = ['#8FB8DE', '#F4B8C0', '#F7D58B', '#A8D08D', '#C9B3E6', '#F9C59E', '#E88A98', '#7FC8C2'];
 const HAIRS = ['#5A3A2A', '#3A2A24', '#7A5238', '#1E1A22', '#C98A5B'];
@@ -92,7 +97,7 @@ function reroll() {
   game?.setCharacter(character);
   buzz(12);
   sound.sfx('pop');
-  if (document.body.classList.contains('playing')) UI.toast('🎲 새 캐릭터로 바뀌었어요');
+  if (document.body.classList.contains('playing')) UI.toast(L('🎲 새 캐릭터로 바뀌었어요', '🎲 You have a new character'));
 }
 saveCharacter();
 drawAvatar(false);
@@ -100,7 +105,7 @@ $('#btn-reroll').onclick = reroll;
 setLoad(10);
 UI.initUI();
 
-/* ---------- PC 소개 패널: 둘러본 곳 체크, 넓게 보기 ---------- */
+/* ---------- PC side panel: places visited, wide view ---------- */
 const VISIT_KEY = 'wedding-visited';
 let visited = new Set();
 try { visited = new Set(JSON.parse(localStorage.getItem(VISIT_KEY) || '[]')); } catch {}
@@ -115,39 +120,39 @@ addEventListener('wv:visit', e => {
   visited.add(e.detail);
   try { localStorage.setItem(VISIT_KEY, JSON.stringify([...visited])); } catch {}
   paintVisits();
-  if (visited.size === document.querySelectorAll('#visits li').length) setTimeout(() => { UI.toast('🏅 마을의 모든 곳을 둘러봤어요!', 3600); UI.confetti(); }, 800);
+  if (visited.size === document.querySelectorAll('#visits li').length) setTimeout(() => { UI.toast(L('🏅 마을의 모든 곳을 둘러봤어요!', "🏅 You've visited every spot in the village"), 3600); UI.confetti(); }, 800);
 });
 paintVisits();
 $('#btn-wide')?.addEventListener('click', () => {
   const on = document.body.classList.toggle('wide');
-  $('#btn-wide').textContent = on ? '📱 휴대폰 보기' : '🖥 넓게 보기';
+  $('#btn-wide').textContent = on ? L('📱 휴대폰 보기', '📱 Phone view') : L('🖥 넓게 보기', '🖥 Wide view');
   game?.resize();
 });
 
-/* ---------- 3D 마을 ---------- */
+/* ---------- 3D village ---------- */
 function hasWebGL() {
   try {
     const c = document.createElement('canvas');
     const gl = c.getContext('webgl2') || c.getContext('webgl');
     if (!gl) return false;
-    gl.getExtension('WEBGL_lose_context')?.loseContext();   // 테스트용 컨텍스트는 바로 돌려줌
+    gl.getExtension('WEBGL_lose_context')?.loseContext();   // give the test context back right away
     return true;
   } catch { return false; }
 }
 
 async function boot() {
-  // 9초 안에 마을이 준비되지 않으면 글로 보기라도 열 수 있게
+  // If the village is not ready within 9 seconds, at least let people open the text view
   const watchdog = setTimeout(() => {
     const btn = $('#btn-enter');
     if (!btn.disabled) return;
-    btn.disabled = false; btn.textContent = '📖 청첩장 글로 보기'; btn.onclick = () => openText();
-    $('#intro-help').textContent = '마을이 늦게 열리고 있어요. 먼저 글로 보기로 읽어 주세요';
+    btn.disabled = false; btn.textContent = L('📖 청첩장 글로 보기', '📖 Read the invitation'); btn.onclick = () => openText();
+    $('#intro-help').textContent = L('마을이 늦게 열리고 있어요. 먼저 글로 보기로 읽어 주세요', 'The village is slow to load. Read the text view for now');
   }, 9000);
   if (hasWebGL()) {
     try {
       game = await Game.init({ character, onProgress: setLoad });
     } catch (err) {
-      console.error('3D 마을을 불러오지 못해 글로 보기로 전환합니다', err);
+      console.error('Could not load the 3D village; switching to the text view', err);
       game = null;
       $('#app').innerHTML = '';
     }
@@ -156,7 +161,7 @@ async function boot() {
   if (!game) document.body.classList.add('no3d');
   setLoad(100);
 
-  /* ---------- 입장 ---------- */
+  /* ---------- Entering ---------- */
   let started = false;
   const bgm = $('#bgm');
   const soundBtn = $('#btn-sound');
@@ -169,7 +174,7 @@ async function boot() {
     if (W.bgm) bgm.play().then(paintSound).catch(() => {});
     game.start({ hint: true });
     paintSound();
-    if (!W.bgm && !sound.saved()) setTimeout(() => UI.toast('🔊 오른쪽 위 버튼으로 오르골 소리를 켤 수 있어요', 3400), 9500);
+    if (!W.bgm && !sound.saved()) setTimeout(() => UI.toast(L('🔊 오른쪽 위 버튼으로 오르골 소리를 켤 수 있어요', '🔊 Tap the top-right button to turn on the music box'), 3400), 9500);
   }
   function openText(section) {
     $('#intro').classList.add('hide');
@@ -182,36 +187,46 @@ async function boot() {
     });
   }
 
-  /* ---------- 바로가기 메뉴 ---------- */
+  /* ---------- Shortcut menu ---------- */
   const themes = game ? game.themes : photoThemes();
   const MENU = [
-    { emoji: '💌', label: '청첩장', go: UI.showInvitation },
-    { emoji: '🗺️', label: '오시는 길', go: UI.showDirections },
-    { emoji: '✉️', label: '축하 편지', go: () => UI.showMailbox(game?.letterSent) },
+    { emoji: '💌', label: L('청첩장', 'Invitation'), go: UI.showInvitation },
+    { emoji: '🗺️', label: L('오시는 길', 'Directions'), go: UI.showDirections },
+    { emoji: '✉️', label: L('축하 편지', 'Letters'), go: () => UI.showMailbox(game?.letterSent) },
     game
-      ? { emoji: '🖼️', label: '추억 사진관', go: () => { UI.closeModal(); game.enterMuseum(); } }
-      : { emoji: '📚', label: '전체 앨범', go: () => UI.showAlbum(themes) },
-    { emoji: '🎁', label: '마음 전하실 곳', go: UI.showAccounts },
-    { emoji: '🕰️', label: '오늘의 식순', go: UI.showSchedule },
-    { emoji: '❓', label: '신랑신부 퀴즈', go: UI.showQuiz },
-    { emoji: '💐', label: '신랑·신부 인사', go: UI.showCouple },
+      ? { emoji: '🖼️', label: L('추억 사진관', 'Photo gallery'), go: () => { UI.closeModal(); game.enterMuseum(); } }
+      : { emoji: '📚', label: L('전체 앨범', 'Full album'), go: () => UI.showAlbum(themes) },
+    { emoji: '🎁', label: L('마음 전하실 곳', 'Gift accounts'), go: UI.showAccounts },
+    { emoji: '🕰️', label: L('오늘의 식순', "Today's schedule"), go: UI.showSchedule },
+    { emoji: '❓', label: L('신랑신부 퀴즈', 'Couple quiz'), go: UI.showQuiz },
+    { emoji: '💐', label: L('신랑·신부 인사', 'Meet the couple'), go: UI.showCouple },
     ...(game ? [
-      { emoji: '🚶', label: '자동 투어', go: () => { UI.closeModal(); game.startTour(); } },
-      { emoji: '🌙', label: '낮 · 밤 바꾸기', go: () => { UI.closeModal(); game.cycleTime(); } },
-      { emoji: '🎲', label: '캐릭터 바꾸기', go: () => { UI.closeModal(); reroll(); } },
+      { emoji: '🚶', label: L('자동 투어', 'Auto tour'), go: () => { UI.closeModal(); game.startTour(); } },
+      { emoji: '🌙', label: L('낮 · 밤 바꾸기', 'Day · night'), go: () => { UI.closeModal(); game.cycleTime(); } },
+      { emoji: '🎲', label: L('캐릭터 바꾸기', 'New character'), go: () => { UI.closeModal(); reroll(); } },
     ] : []),
+    // language: shows the other language
+    { emoji: '🌐', label: L('English', '한국어'), go: switchFromMenu },
   ];
   if (ph === 'today') {
-    // 당일에는 식순·오시는 길·계좌를 앞으로
-    const first = ['오늘의 식순', '오시는 길', '마음 전하실 곳'];
+    // on the wedding day, schedule, directions and accounts come first (same strings as the labels above)
+    const first = [L('오늘의 식순', "Today's schedule"), L('오시는 길', 'Directions'), L('마음 전하실 곳', 'Gift accounts')];
     MENU.sort((a, b) => (first.indexOf(a.label) + 1 || 99) - (first.indexOf(b.label) + 1 || 99));
+  }
+  /* Language from the ☰ menu: close the sheet first (it pops its history entry), then reload */
+  function switchFromMenu() {
+    let done = false;
+    const go = () => { if (!done) { done = true; setLang(isKo ? 'en' : 'ko'); } };
+    addEventListener('popstate', go, { once: true });
+    UI.closeModal();
+    setTimeout(go, 500);
   }
   const openMenu = () => UI.showMenu(MENU);
   $('#btn-menu').onclick = openMenu;
   $('#btn-text-hud').onclick = () => openText();
   $('#btn-desk-text')?.addEventListener('click', () => openText());
 
-  /* ---------- 소리: mp3가 있으면 그것을, 없으면 합성 오르골 ---------- */
+  /* ---------- Sound: the mp3 if there is one, otherwise the synthesised music box ---------- */
   if (W.bgm) {
     bgm.src = W.bgm;
     soundBtn.hidden = false;
@@ -225,13 +240,13 @@ async function boot() {
     soundBtn.onclick = () => {
       const on = sound.setEnabled(!sound.enabled);
       paintSound();
-      UI.toast(on ? '🔊 오르골 배경음을 켰어요' : '🔇 소리를 껐어요');
+      UI.toast(on ? L('🔊 오르골 배경음을 켰어요', '🔊 Music box on') : L('🔇 소리를 껐어요', '🔇 Sound off'));
     };
   }
 
   const enterBtn = $('#btn-enter');
   enterBtn.disabled = false;
-  enterBtn.textContent = game ? '마을에 입장하기 💐' : '📖 청첩장 글로 보기';
+  enterBtn.textContent = game ? L('마을에 입장하기 💐', 'Enter the village 💐') : L('📖 청첩장 글로 보기', '📖 Read the invitation');
   enterBtn.onclick = () => (game ? start3D() : openText());
   $('#btn-text').onclick = () => openText();
   $('#btn-tour-start').onclick = () => {

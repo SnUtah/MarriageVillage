@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { L } from './i18n.js';
 import { isMobile, formatKDate, damp } from './util.js';
 import { buildEnvironment, spawnHearts, updateBursts, TIMES } from './world.js';
 import { buildProps, MUSEUM_DOOR, BED } from './props.js';
@@ -9,11 +10,11 @@ import { sound } from './sound.js';
 import * as UI from './ui.js';
 
 /* =========================================================
-   3D 마을 (휴대폰 세로 화면 기준)
-   - 화면 아무 곳이나 끌면 조이스틱이 나타나 걷기
-   - 톡 누르면 그 자리로 걸어가기, 이름표를 누르면 찾아가서 열기
-   - 입장 전에는 카메라가 마을 위를 천천히 돌고, 입장하면 내 캐릭터로 내려앉음
-   - 🚶 자동 투어, 🌙 낮·노을·밤, 📸 포토존 셀카, 🪙 동전, 🌷 편지 꽃밭
+   3D village (made for a phone held upright)
+   - Drag anywhere on the screen and a joystick appears for walking
+   - Tap a spot to walk there; tap a name tag to walk there and open it
+   - Before entering, the camera circles slowly over the village; on entering it swoops down to my character
+   - 🚶 auto tour, 🌙 day · dusk · night, 📸 photo zone selfie, 🪙 coins, 🌷 letter garden
    ========================================================= */
 const W = window.WEDDING;
 const $ = s => document.querySelector(s);
@@ -25,7 +26,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 let renderer, scene, camera, sun, hemi, env, props, museum, player, marker;
 let colliders = [], boxes = [];
 let playing = false, current = null, lastTheme = -2, dpr = 1, lost = false, level = 0, markerT = 0, frame = 0;
-/* 화면 해상도 배율: 휴대폰 1.75, PC 1.5, 넓게 보기 1.0, 느린 기기는 단계별로 더 낮춤 */
+/* Screen resolution scale: phone 1.75, PC 1.5, wide view 1.0; lowered step by step on slow devices */
 function currentDpr() {
   let d = Math.min(devicePixelRatio || 1, isMobile ? 1.75 : 1.5);
   if (level >= 1) d = Math.min(d, 1.25);
@@ -33,7 +34,7 @@ function currentDpr() {
   if (document.body.classList.contains('wide')) d = Math.min(d, 1);
   return d;
 }
-/* 내장 그래픽처럼 힘이 약한 GPU면 처음부터 가볍게 */
+/* With a weak GPU (e.g. integrated graphics) start light */
 function weakGPU() {
   try {
     const gl = renderer.getContext();
@@ -53,14 +54,14 @@ const state = {
 const keys = new Set();
 const joy = { x: 0, y: 0 };
 const { date } = formatKDate();
-const PZ = { x: -11, z: 19, ang: 0.5 };   // 포토존 위치·방향
+const PZ = { x: -11, z: 19, ang: 0.5 };   // photo zone position · direction
 const TOUR = ['invitation', 'mailbox', 'directions', 'gift', 'schedule', 'quiz', 'fountain', 'couple', 'photozone', 'museum'];
 const visit = id => { try { dispatchEvent(new CustomEvent('wv:visit', { detail: id })); } catch {} };
 
-/* ---------- 시작 ---------- */
+/* ---------- Start ---------- */
 export async function init({ character: c, onProgress = () => {} } = {}) {
   if (c) character = { ...character, ...c };
-  // 캔버스 글씨용 폰트 기다리기 (최대 3초)
+  // wait for the fonts used on canvases (up to 3 seconds)
   await Promise.race([
     Promise.all(['700 40px "Gowun Batang"', '40px "Gowun Batang"', '40px "Gowun Dodum"'].map(f => document.fonts.load(f))),
     new Promise(r => setTimeout(r, 3000)),
@@ -73,11 +74,11 @@ export async function init({ character: c, onProgress = () => {} } = {}) {
   dpr = currentDpr();
   renderer.setPixelRatio(dpr);
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFShadowMap;   // 부드러운 그림자(PCFSoft)보다 훨씬 가벼움
+  renderer.shadowMap.type = THREE.PCFShadowMap;   // much lighter than soft shadows (PCFSoft)
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   $('#app').appendChild(renderer.domElement);
-  // 그래픽이 잠깐 끊겨도(백그라운드 복귀 등) 다시 살아나도록
-  renderer.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; UI.toast('화면을 다시 그리는 중…'); });
+  // recover if the graphics drop out for a moment (e.g. coming back from the background)
+  renderer.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; UI.toast(L('화면을 다시 그리는 중…', 'Redrawing the screen…')); });
   renderer.domElement.addEventListener('webglcontextrestored', () => { lost = false; renderer.setPixelRatio(dpr); renderer.setSize(view.w, view.h); snapCamera(); });
 
   scene = new THREE.Scene();
@@ -105,12 +106,12 @@ export async function init({ character: c, onProgress = () => {} } = {}) {
   colliders = [...env.colliders, ...props.colliders];
   boxes = props.boxes;
 
-  // 편지 한 통 = 꽃 한 송이 (시트에서 나중에 도착한 편지도 피어남), 동전은 던진 만큼
+  // one letter = one flower (letters that arrive later from the sheet bloom too); coins = as many as were tossed
   plantAll(false);
   addEventListener('wedding:letters', () => plantAll(false));
   props.fountain.setCoins(coinCount());
 
-  // 톡 누른 자리에 잠깐 보이는 표시
+  // a marker shown briefly where you tapped
   marker = new THREE.Mesh(new THREE.RingGeometry(0.32, 0.48, 24), new THREE.MeshBasicMaterial({ color: '#E88A98', transparent: true, opacity: 0, depthWrite: false }));
   marker.rotation.x = -Math.PI / 2;
   marker.position.y = 0.05;
@@ -120,7 +121,7 @@ export async function init({ character: c, onProgress = () => {} } = {}) {
   bindInput();
   buildMuseumBar();
   $('#btn-shot').onclick = () => takePhoto(false);
-  $('#btn-tour')?.addEventListener('click', () => stopTour('투어를 멈췄어요. 마음대로 둘러보세요'));
+  $('#btn-tour')?.addEventListener('click', () => stopTour(L('투어를 멈췄어요. 마음대로 둘러보세요', 'Tour stopped. Look around as you like')));
   addEventListener('resize', onResize);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) clock.getDelta(); });
   onResize();
@@ -128,14 +129,14 @@ export async function init({ character: c, onProgress = () => {} } = {}) {
   if (lowEnd || weakGPU()) applyLevel(1);
   snapCamera();
   loop();
-  // 사진관 일러스트는 한가할 때 미리 그려 둠 (입장할 때 끊기지 않도록)
+  // draw the museum illustrations ahead of time while idle (so entering does not stutter)
   if (W.demoPhotos) {
     const queue = museum.themes.flatMap(t => t.photos);
     const idle = window.requestIdleCallback || (f => setTimeout(f, 120));
     const step = () => { const p = queue.shift(); if (!p) return; try { photoURL(p); } catch {} idle(step); };
     idle(step);
   }
-  // 주소 끝에 #debug 가 있으면 콘솔에서 만져 볼 수 있는 손잡이 (테스트용)
+  // with #debug at the end of the address, a handle to play with from the console (for testing)
   if (/debug/.test(location.hash)) window.__wv = { goTo: id => goTo(props.interactables.find(i => i.id === id)), takePhoto, enterMuseum, exitMuseum, cycleTime, startTour, stopTour, applyTime, state, props, flowerCount: () => props.flowerCount() };
 
   return {
@@ -148,30 +149,30 @@ export async function init({ character: c, onProgress = () => {} } = {}) {
 
 function start({ hint = true } = {}) {
   playing = true;
-  state.swoopT = 1.8;           // 궤도 카메라 → 내 캐릭터로 천천히 내려앉기
+  state.swoopT = 1.8;           // orbit camera → swoop slowly down to my character
   perfSum = perfN = 0;
   if (sound.saved()) sound.setEnabled(true);
-  if (hint) setTimeout(() => UI.toast('👆 화면을 끌면 걷고, 이름표를 누르면 찾아가요', 4200), 900);
-  const greet = timeMode === 'night' ? '🌙 밤에 와주셨네요. 가로등을 켜 두었어요' : timeMode === 'dusk' ? '🌇 노을 지는 마을이에요. 천천히 둘러보세요' : null;
+  if (hint) setTimeout(() => UI.toast(L('👆 화면을 끌면 걷고, 이름표를 누르면 찾아가요', '👆 Drag to walk, tap a name tag to go there'), 4200), 900);
+  const greet = timeMode === 'night' ? L('🌙 밤에 와주셨네요. 가로등을 켜 두었어요', '🌙 You came at night. We left the streetlights on') : timeMode === 'dusk' ? L('🌇 노을 지는 마을이에요. 천천히 둘러보세요', '🌇 The sun is setting over the village. Take your time') : null;
   if (greet) setTimeout(() => UI.toast(greet, 3600), 5600);
 }
 function setCharacter(c) { character = { ...character, ...c }; if (player) swapPlayer(); }
 
-/* 꽃밭: 편지마다 한 번만 심기 (같은 편지가 시트에서 다시 와도 두 번 피지 않도록) */
+/* Garden: plant once per letter (so a letter that comes again from the sheet does not bloom twice) */
 const planted = new Set();
 const letterKey = l => l.id || `${l.name}|${l.time || ''}`;
 function plantAll(animate) {
   allLetters().forEach(l => { const k = letterKey(l); if (planted.has(k)) return; planted.add(k); props.plantFlower(l, animate); });
 }
 
-/* 편지를 보내면 꽃밭에 꽃이 피고, 내 캐릭터 주위로 편지가 날아요 */
+/* Sending a letter makes a flower bloom in the garden and letters fly around my character */
 function letterSent(letter) {
   if (letter) planted.add(letterKey(letter));
-  const at = props.plantFlower(letter || { name: '하객', side: '신랑측' }, true);
+  const at = props.plantFlower(letter || { name: L('하객', 'Guest'), side: '신랑측' }, true);   // side = stored value
   spawnHearts(scene, new THREE.Vector3(state.pos.x, 2.2 + state.y, state.pos.z), 10, '💌');
   if (at && state.mode === 'out' && !tour) {
     state.target = new THREE.Vector3(BED.x - BED.r - 1.0, 0, BED.z + 0.6); state.pending = null; state.targetT = 12; state.moveT = 0;
-    setTimeout(() => UI.toast(`🌷 ${letter?.name || '하객'}님의 꽃이 편지 꽃밭에 피었어요`, 3200), 500);
+    setTimeout(() => UI.toast(L(`🌷 ${letter?.name || '하객'}님의 꽃이 편지 꽃밭에 피었어요`, `🌷 ${letter?.name || 'Guest'}'s flower bloomed in the letter garden`), 3200), 500);
   }
 }
 
@@ -181,14 +182,14 @@ function swapPlayer() {
   scene.add(player.root);
 }
 
-/* ---------- 🌙 낮 · 노을 · 밤 ---------- */
+/* ---------- 🌙 Day · dusk · night ---------- */
 function initialTime() {
   const h = location.hash;
   if (/night/.test(h)) return 'night';
   if (/sunset|dusk/.test(h)) return 'dusk';
   if (/day|morning/.test(h)) return 'day';
-  try { const s = localStorage.getItem('wedding-time'); if (TIMES[s]) return s; } catch {}   // 하객이 메뉴에서 고른 것
-  if (W.skyMode && TIMES[W.skyMode]) return W.skyMode;                                           // 설정 기본값 (day)
+  try { const s = localStorage.getItem('wedding-time'); if (TIMES[s]) return s; } catch {}   // what the guest picked in the menu
+  if (W.skyMode && TIMES[W.skyMode]) return W.skyMode;                                           // config default (day)
   const kh = new Date(now().toLocaleString('en-US', { timeZone: 'Asia/Seoul' })).getHours();
   return kh >= 6 && kh < 16 ? 'day' : kh < 19 ? 'dusk' : 'night';
 }
@@ -208,11 +209,11 @@ function cycleTime() {
   const next = order[(order.indexOf(timeMode) + 1) % order.length];
   applyTime(next);
   try { localStorage.setItem('wedding-time', next); } catch {}
-  UI.toast(next === 'night' ? '🌙 밤 마을이에요. 가로등이 켜졌어요' : next === 'dusk' ? '🌇 노을이 지고 있어요' : '☀️ 다시 환한 낮이에요');
+  UI.toast(next === 'night' ? L('🌙 밤 마을이에요. 가로등이 켜졌어요', '🌙 Night in the village. The streetlights are on') : next === 'dusk' ? L('🌇 노을이 지고 있어요', '🌇 The sun is setting') : L('☀️ 다시 환한 낮이에요', '☀️ Back to bright daylight'));
   return next;
 }
 
-/* ---------- 화면 크기 ---------- */
+/* ---------- Screen size ---------- */
 function measure() {
   const r = phone.getBoundingClientRect();
   view.w = Math.max(1, r.width); view.h = Math.max(1, r.height); view.left = r.left; view.top = r.top;
@@ -227,9 +228,9 @@ function onResize() {
   renderer.setSize(view.w, view.h);
 }
 
-/* ---------- 조작 ---------- */
+/* ---------- Controls ---------- */
 function bindInput() {
-  // PC 키보드
+  // PC keyboard
   addEventListener('keydown', e => {
     if (UI.isOverlayOpen() || /INPUT|TEXTAREA/.test(e.target.tagName) || document.body.classList.contains('reading')) return;
     keys.add(e.code);
@@ -242,7 +243,7 @@ function bindInput() {
   addEventListener('keyup', e => keys.delete(e.code));
   addEventListener('blur', () => keys.clear());
 
-  // 화면 어디서든 끌면 나타나는 조이스틱
+  // joystick that appears wherever you drag on the screen
   const el = renderer.domElement, base = $('#joy'), knob = base.querySelector('.knob');
   const R = 48;
   let p = null;
@@ -262,7 +263,7 @@ function bindInput() {
       document.body.classList.add('moved');
     }
     let dx = e.clientX - p.ax, dy = e.clientY - p.ay, d = Math.hypot(dx, dy);
-    if (d > R) { // 손가락이 멀리 가면 조이스틱도 따라감
+    if (d > R) { // the joystick follows when the finger goes far
       p.ax = e.clientX - (dx / d) * R; p.ay = e.clientY - (dy / d) * R;
       dx = e.clientX - p.ax; dy = e.clientY - p.ay;
     }
@@ -283,8 +284,8 @@ function bindInput() {
   el.addEventListener('pointerup', end);
   el.addEventListener('pointercancel', end);
 
-  // 조이스틱을 끄는 손가락이 눌린 채로 다른 손가락이 버튼을 누르면 휴대폰은 click을 만들어 주지 않음
-  // → pointerdown으로 바로 반응 (키보드 Enter/Space는 click으로)
+  // while one finger holds the joystick, phones do not fire click for a button pressed by another finger
+  // → react right away on pointerdown (keyboard Enter/Space use click)
   tapButton($('#btn-action'), () => interact());
   tapButton($('#btn-jump'), () => jump());
   tapButton($('#btn-heart'), () => hearts());
@@ -300,7 +301,7 @@ function tapButton(el, fn) {
   el.addEventListener('click', () => { if (performance.now() - lastPointer > 500) fn(); });
 }
 
-/* 이름표를 누르거나 투어에서 쓰는 '찾아가기': 물건 바로 앞까지 */
+/* 'Go to' used by tapping a name tag or by the tour: walk right up to the object */
 function goTo(it) {
   const dx = state.pos.x - it.pos.x, dz = state.pos.z - it.pos.z, d = Math.hypot(dx, dz) || 1;
   const stop = Math.max(0.5, it.r - 0.6);
@@ -309,7 +310,7 @@ function goTo(it) {
 }
 function showMarker(pt) { marker.position.set(pt.x, 0.05, pt.z); markerT = 1; }
 
-/* 톡 → 그 자리로 걸어가기 / 이름표 톡 → 가서 바로 열기 */
+/* Tap → walk to that spot / tap a name tag → walk there and open it */
 const ray = new THREE.Raycaster();
 const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 function onTap(cx, cy) {
@@ -331,18 +332,20 @@ function onTap(cx, cy) {
   if (ray.ray.intersectPlane(groundPlane, pt)) { state.target = pt; state.pending = null; state.targetT = 8; state.moveT = 0; state.stuckT = 0; showMarker(pt); }
 }
 
-/* ---------- 🪙 동전 ---------- */
+/* ---------- 🪙 Coins ---------- */
 const COIN_KEY = 'wedding-coins';
 const coinCount = () => { try { return +localStorage.getItem(COIN_KEY) || 0; } catch { return 0; } };
 function coinLine(n) {
-  if (n === 1) return '🪙 첫 동전이에요. 소원은 마음속으로만 🤫';
-  if (n === 7) return '🪙 일곱 번째… 소원 부자시네요 😆';
-  if (n >= 10) return '🪙 분수가 부자가 됐어요 💰 두 분의 행복을 빌었어요';
-  const wishes = ['두 분의 행복을 빌었어요', '평생 웃음 가득하길 빌었어요', '건강하고 행복하길 빌었어요', '오늘처럼 늘 따스하길 빌었어요'];
-  return `🪙 퐁당! ${wishes[Math.floor(Math.random() * wishes.length)]}`;
+  if (n === 1) return L('🪙 첫 동전이에요. 소원은 마음속으로만 🤫', '🪙 Your first coin. Keep the wish to yourself 🤫');
+  if (n === 7) return L('🪙 일곱 번째… 소원 부자시네요 😆', '🪙 Coin number seven… so many wishes 😆');
+  if (n >= 10) return L('🪙 분수가 부자가 됐어요 💰 두 분의 행복을 빌었어요', '🪙 The fountain is getting rich 💰 You wished the couple happiness');
+  const wishes = L(['두 분의 행복을 빌었어요', '평생 웃음 가득하길 빌었어요', '건강하고 행복하길 빌었어요', '오늘처럼 늘 따스하길 빌었어요'],
+    ['You wished the couple happiness', 'You wished them a lifetime of laughter', 'You wished them health and happiness', 'You wished them days as warm as today']);
+  const wish = wishes[Math.floor(Math.random() * wishes.length)];
+  return L(`🪙 퐁당! ${wish}`, `🪙 Plop — ${wish}`);
 }
 
-/* ---------- 상호작용 ---------- */
+/* ---------- Interaction ---------- */
 const ACTIONS = {
   invitation: UI.showInvitation,
   directions: UI.showDirections,
@@ -403,11 +406,11 @@ function updateActionButton() {
   const btn = $('#btn-action');
   const key = current ? (current.id || current.type) + (current.entry?.src ?? current.ti ?? '') : '';
   if (btn.dataset.key === key) return;
-  if (key && !btn.dataset.key) { buzz(8); sound.sfx('chime'); } // 물건에 가까워지면 살짝 진동
+  if (key && !btn.dataset.key) { buzz(8); sound.sfx('chime'); } // a little vibration when you get close to an object
   btn.dataset.key = key;
   btn.classList.toggle('ready', !!current);
   btn.querySelector('.em').textContent = current ? current.emoji : '👋';
-  btn.querySelector('.lb').textContent = current ? current.action : '인사하기';
+  btn.querySelector('.lb').textContent = current ? current.action : L('인사하기', 'Say hi');
 }
 
 function jump() { if (state.y <= 0.001 && !UI.isOverlayOpen() && !state.busy) { state.vy = 6.5; sound.sfx('jump'); } }
@@ -415,16 +418,16 @@ function hearts() {
   spawnHearts(scene, new THREE.Vector3(state.pos.x, 2.2 + state.y, state.pos.z), 8);
   player.wave(1);
   sound.sfx('heart');
-  // 신랑신부 가까이에서 하트를 보내면 같이 흔들어 줘요
+  // sending hearts near the couple makes them wave back
   if (state.mode === 'out' && Math.hypot(state.pos.x, state.pos.z + 19.6) < 6) props.npcs.forEach(n => n.wave(1.5));
 }
 
-/* ---------- 🚶 자동 투어: 마을의 열 곳을 차례로 안내 ---------- */
+/* ---------- 🚶 Auto tour: visits the ten places of the village in turn ---------- */
 function startTour() {
   if (!playing || state.mode !== 'out' || state.busy) return;
   tour = { i: 0, waitT: 0.4 };
   document.body.classList.add('touring');
-  UI.toast('🚶 자동 투어 시작! 화면을 끌면 언제든 멈춰요', 3200);
+  UI.toast(L('🚶 자동 투어 시작! 화면을 끌면 언제든 멈춰요', '🚶 Auto tour started. Drag the screen to stop anytime'), 3200);
 }
 function stopTour(msg) {
   if (!tour) return;
@@ -435,7 +438,7 @@ function stopTour(msg) {
 }
 function tourNext() {
   const id = TOUR[tour.i++];
-  if (!id) { stopTour(); UI.toast('🎉 투어 끝! 이제 마음대로 둘러보세요', 3600); UI.confetti(); sound.sfx('tada'); return; }
+  if (!id) { stopTour(); UI.toast(L('🎉 투어 끝! 이제 마음대로 둘러보세요', '🎉 Tour finished. Now look around as you like'), 3600); UI.confetti(); sound.sfx('tada'); return; }
   const it = props.interactables.find(i => i.id === id);
   if (!it) return;
   goTo(it);
@@ -443,7 +446,7 @@ function tourNext() {
   tour.waitT = id === 'fountain' ? 2.4 : id === 'couple' ? 1.2 : 0.9;
 }
 
-/* ---------- 사진관 드나들기 (휴대폰 뒤로가기 = 나가기) ---------- */
+/* ---------- Going in and out of the museum (phone back button = go outside) ---------- */
 const fade = on => new Promise(r => { $('#fade').classList.toggle('on', on); setTimeout(r, 460); });
 function buildMuseumBar() {
   const bar = $('#museum-bar');
@@ -457,7 +460,7 @@ function buildMuseumBar() {
     bar.appendChild(c);
   });
   const album = document.createElement('button');
-  album.className = 'chip'; album.textContent = '📚 전체 앨범';
+  album.className = 'chip'; album.textContent = L('📚 전체 앨범', '📚 Full album');
   album.onclick = () => UI.showAlbum(museum.themes);
   bar.append(album);
   $('#btn-exit').onclick = () => exitMuseum();
@@ -475,7 +478,7 @@ async function enterMuseum(ti = -1) {
   env.group.visible = props.group.visible = false;
   museum.group.visible = true;
   sun.castShadow = false;
-  setLights(TIMES.day);   // 실내는 항상 환하게
+  setLights(TIMES.day);   // always bright indoors
   state.pos.copy(ti >= 0 ? museum.themeStart(ti) : museum.spawn);
   state.vel.set(0, 0, 0); state.target = null; state.yaw = Math.PI / 2;
   document.body.classList.add('in-museum');
@@ -484,7 +487,7 @@ async function enterMuseum(ti = -1) {
   UI.pushBack(backFromMuseum);
   await fade(false);
   state.busy = false;
-  UI.toast(wasTour ? '🏁 투어의 마지막, 사진관이에요. 오른쪽으로 걸으며 구경하세요' : '👉 오른쪽으로 걸으며 사진을 구경하세요', wasTour ? 4200 : 2400);
+  UI.toast(wasTour ? L('🏁 투어의 마지막, 사진관이에요. 오른쪽으로 걸으며 구경하세요', '🏁 Last stop of the tour: the photo gallery. Walk to the right to look around') : L('👉 오른쪽으로 걸으며 사진을 구경하세요', '👉 Walk to the right to see the photos'), wasTour ? 4200 : 2400);
 }
 async function exitMuseum(fromBack = false) {
   if (state.mode !== 'museum') return;
@@ -507,7 +510,7 @@ async function exitMuseum(fromBack = false) {
   state.busy = false;
 }
 
-/* ---------- 📸 기념사진 (포토존: 신랑신부가 옆에 와서 3·2·1) ---------- */
+/* ---------- 📸 Souvenir photo (photo zone: the couple comes over, 3 · 2 · 1) ---------- */
 function polaroid(src) {
   const w = src.width, h = src.height;
   const pad = Math.round(w * 0.05), foot = Math.round(w * 0.22);
@@ -520,8 +523,8 @@ function polaroid(src) {
   g.font = `700 ${Math.round(foot * 0.3)}px "Gowun Batang", serif`;
   g.fillText(`${W.groom.name} ♥ ${W.bride.name}`, inner.width / 2, h + pad + foot * 0.45);
   g.fillStyle = '#7C6A66'; g.font = `${Math.round(foot * 0.15)}px "Gowun Dodum", sans-serif`;
-  g.fillText(`${date} · 우리의 작은 결혼 마을에서`, inner.width / 2, h + pad + foot * 0.74);
-  // 살짝 기울인 폴라로이드 + 테이프
+  g.fillText(L(`${date} · 우리의 작은 결혼 마을에서`, `${date} · in our little wedding village`), inner.width / 2, h + pad + foot * 0.74);
+  // slightly tilted polaroid + tape
   const out = document.createElement('canvas');
   out.width = Math.round(inner.width * 1.12); out.height = Math.round(inner.height * 1.1);
   const o = out.getContext('2d');
@@ -576,26 +579,26 @@ async function takePhoto(pose = false) {
     restore?.(); restore = null;
     state.posing = null;
     const inApp = /KAKAOTALK|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAgent);
-    UI.openModal('기념사진', `
-      <img src="${url}" style="width:100%;border-radius:14px;box-shadow:var(--shadow);-webkit-touch-callout:default" alt="기념사진" />
-      <p class="muted center">${inApp ? '사진을 <b>길게 눌러</b> 저장해 주세요' : '사진을 <b>길게 눌러</b> 저장하거나 아래 버튼을 눌러주세요'}</p>
+    UI.openModal(L('기념사진', 'Souvenir photo'), `
+      <img src="${url}" style="width:100%;border-radius:14px;box-shadow:var(--shadow);-webkit-touch-callout:default" alt="${L('기념사진', 'Souvenir photo')}" />
+      <p class="muted center">${inApp ? L('사진을 <b>길게 눌러</b> 저장해 주세요', '<b>Press and hold</b> the photo to save it') : L('사진을 <b>길게 눌러</b> 저장하거나 아래 버튼을 눌러주세요', '<b>Press and hold</b> the photo to save it, or use the buttons below')}</p>
       <div class="btns">
-        <button class="btn pink ph-share">📤 공유하기</button>
-        <button class="btn ph-save">💾 저장하기</button>
+        <button class="btn pink ph-share">${L('📤 공유하기', '📤 Share')}</button>
+        <button class="btn ph-save">${L('💾 저장하기', '💾 Save')}</button>
       </div>`, body => {
       let file = null, objUrl = null;
       c.toBlob(b => { if (!b) return; file = new File([b], 'wedding-village-photo.jpg', { type: 'image/jpeg' }); objUrl = URL.createObjectURL(b); }, 'image/jpeg', 0.9);
       const save = () => {
-        if (inApp) { UI.toast('사진을 길게 눌러 저장해 주세요'); return; }
+        if (inApp) { UI.toast(L('사진을 길게 눌러 저장해 주세요', 'Press and hold the photo to save it')); return; }
         const a = document.createElement('a');
         a.href = objUrl || url; a.download = 'wedding-village-photo.jpg';
         document.body.appendChild(a); a.click(); a.remove();
-        UI.toast('💾 사진을 저장했어요');
+        UI.toast(L('💾 사진을 저장했어요', '💾 Photo saved'));
       };
       body.querySelector('.ph-save').onclick = save;
       body.querySelector('.ph-share').onclick = async () => {
         if (file && navigator.canShare?.({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: `${W.groom.name} ♥ ${W.bride.name} 결혼 마을` }); return; }
+          try { await navigator.share({ files: [file], title: L(`${W.groom.name} ♥ ${W.bride.name} 결혼 마을`, `${W.groom.name} ♥ ${W.bride.name} wedding village`) }); return; }
           catch (err) { if (err?.name === 'AbortError') return; }
         }
         save();
@@ -609,7 +612,7 @@ async function takePhoto(pose = false) {
   }
 }
 
-/* ---------- 이동 & 충돌 ---------- */
+/* ---------- Movement & collision ---------- */
 const PR = 0.45;
 function collide(p) {
   if (state.mode === 'museum') { museum.clamp(p); return; }
@@ -651,13 +654,13 @@ function movePlayer(dt) {
         const dp = Math.hypot(state.pos.x - it.pos.x, state.pos.z - it.pos.z);
         arrived = dp < it.r - 0.2 || (dp < it.r && sp0 < 0.6 && state.moveT > 0.5);
       } else arrived = d < 0.35;
-      // 뭔가에 막혀 0.7초 넘게 못 움직이면 포기 (물건 반경 안이면 도착으로 침)
+      // give up if blocked for more than 0.7 s (inside the object's radius counts as arrived)
       state.stuckT = state.moveT > 0.5 && sp0 < 0.5 ? state.stuckT + dt : 0;
       if (arrived || state.targetT < 0 || state.stuckT > 0.7) {
         const inRange = it && Math.hypot(state.pos.x - it.pos.x, state.pos.z - it.pos.z) < it.r;
         state.target = null; state.pending = null; state.stuckT = 0;
         if (it && (arrived || inRange)) interact(it);
-        else if (!arrived && !tour) UI.toast('그쪽은 막혀 있어요');
+        else if (!arrived && !tour) UI.toast(L('그쪽은 막혀 있어요', 'That way is blocked'));
       } else { ix = tmp.x / d; iz = tmp.z / d; }
     }
   }
@@ -685,7 +688,7 @@ function movePlayer(dt) {
   return sp / speed;
 }
 
-/* ---------- 카메라 (세로 화면 기준) ---------- */
+/* ---------- Camera (made for portrait screens) ---------- */
 const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 const goalPos = new THREE.Vector3(), goalLook = new THREE.Vector3();
 function cameraGoal(outPos, outLook, t = 0) {
@@ -695,7 +698,7 @@ function cameraGoal(outPos, outLook, t = 0) {
     outPos.set(z.x + z.nx * 4.4, 1.7, z.z + z.nz * 4.4);
     outLook.set(z.x, 1.25, z.z);
   } else if (!playing) {
-    // 입장 전: 광장 위를 천천히 도는 소개 카메라
+    // before entering: intro camera circling slowly over the plaza
     const a = t * 0.08;
     outPos.set(Math.sin(a) * 26, 12 + Math.sin(t * 0.3) * 1.2, 4 + Math.cos(a) * 26);
     outLook.set(0, 2, -2);
@@ -722,7 +725,7 @@ function updateCamera(dt, t) {
   env.sky.position.copy(camera.position);
 }
 
-/* ---------- 느린 휴대폰이면 단계적으로 가볍게 ---------- */
+/* ---------- On slow phones, lighten things step by step ---------- */
 let perfSum = 0, perfN = 0, slowCount = 0;
 function applyLevel(n) {
   level = n;
@@ -741,17 +744,17 @@ function adaptQuality(dt) {
   const avg = perfSum / perfN;
   perfSum = perfN = 0;
   if (avg > 1 / 32 && level < 3) applyLevel(level + 1);
-  else if (level >= 3 && avg > 1 / 18 && ++slowCount === 2) UI.toast('📖 휴대폰이 힘들어하면 ☰ 메뉴의 "글로 보기"로 편하게 보세요', 4800);
+  else if (level >= 3 && avg > 1 / 18 && ++slowCount === 2) UI.toast(L('📖 휴대폰이 힘들어하면 ☰ 메뉴의 "글로 보기"로 편하게 보세요', '📖 If your phone is struggling, try "Text view" next to the ☰ menu'), 4800);
 }
 
-/* ---------- 매 프레임 ---------- */
+/* ---------- Every frame ---------- */
 function loop() {
   requestAnimationFrame(loop);
   frame++;
-  if (!playing && frame % 2) return;   // 입장 전(소개 화면)에는 절반만 그려서 가볍게
+  if (!playing && frame % 2) return;   // before entering (intro screen), draw every other frame to keep it light
   const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
   if (lost || document.hidden) return;
-  // 팝업이나 '글로 보기'가 화면을 덮고 있으면 그리지 않고 배터리를 아낌
+  // skip drawing while a popup or the text view covers the screen, to save battery
   if (UI.isOverlayOpen() || document.body.classList.contains('reading')) return;
   adaptQuality(dt);
 
@@ -767,11 +770,11 @@ function loop() {
       const d = Math.hypot(state.pos.x - it.pos.x, state.pos.z - it.pos.z);
       it.label.material.opacity = Math.max(0.3, Math.min(1, 1.6 - d / 22));
     }
-    // 사진관 문으로 걸어 들어가면 자동 입장
+    // walking into the museum door enters automatically
     state.doorCooldown -= dt;
     if (playing && state.doorCooldown < 0 && !state.busy && state.vel.z < -1 &&
       Math.hypot(state.pos.x - MUSEUM_DOOR.x, state.pos.z - MUSEUM_DOOR.z) < 1.1) enterMuseum();
-    // 투어: 멈춰 있고 열린 창이 없으면 다음 장소로
+    // tour: when stopped and no window is open, go to the next place
     if (tour && playing && !state.busy && !state.target) {
       tour.waitT -= dt;
       if (tour.waitT <= 0) tourNext();

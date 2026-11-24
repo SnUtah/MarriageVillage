@@ -43,19 +43,24 @@ export function setLang(lang) {
    - an array of strings / a string / a number replaces the Korean one
    Anything left out keeps the Korean content. */
 const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+// English-only display fields that may be added even though the Korean side has no such key
+const EN_ONLY = new Set(['banner']);
 function mergeConfig(base, en) {
   if (!isObj(base) || !isObj(en)) return;
   for (const k of Object.keys(en)) {
     const e = en[k], b = base[k];
     if (e === undefined || e === null) continue;
+    // never add what the Korean side does not have (e.g. emptied sample answers)
+    if (b === undefined && !EN_ONLY.has(k)) continue;
     if (Array.isArray(e)) {
-      if (Array.isArray(b) && e.some(isObj)) {
+      if (!Array.isArray(b)) continue;
+      if (e.some(isObj)) {
         // never add elements: only fill in the Korean ones that exist
         e.forEach((x, i) => { if (isObj(x) && isObj(b[i])) mergeConfig(b[i], x); });
-      } else base[k] = e.slice();
+      } else if (b.length) base[k] = e.slice(); // an emptied Korean list stays empty
     } else if (isObj(e)) {
-      if (isObj(b)) mergeConfig(b, e); else base[k] = e;
-    } else base[k] = e;
+      if (isObj(b)) mergeConfig(b, e);
+    } else if (b !== '') base[k] = e; // an emptied Korean text stays empty
   }
 }
 /* If the Korean names were changed but the English block still describes the sample couple
